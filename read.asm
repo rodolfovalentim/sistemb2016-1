@@ -5,32 +5,49 @@ segment code
 	mov ax, stack
 	mov ss,	ax
 	mov sp, stacktop
+	
+	;abre arquivo
+	mov ah, 3Dh
+	mov al, 00
+	mov dx, filename
+	mov cx, 1
+	int 21h	
 
-le:	mov ah, 3Fh
-	mov bx, handle
+	;mov [handle], ax
+	;mov bx, buffer
+	;mov [pointer], bx
+;le:
+ 	mov ah, 3Fh
+	mov bx, [handle]
 	mov cx, 1
 	mov dx, input
 	int 21h
 
-	;escreve no console
+	;compara com o espaço
 	mov dl, [input]
 	cmp dl, 20h
 	je exit
-	
-	mov ah, 09h
-	mov dx, buffer
-	int 21h
-	jmp le
 
-exit
+	mov bx, buffer
+	mov dl, [input]
+	mov [bx], [byte dl]
+	add bx, 1
+	mov byte[bx], 24h 	
+
+	mov dx, buffer
+	mov ah, 09h
+	int 21h
+	;jmp le
+exit:
 	mov ah, 4Ch
 	int 21h
 	
 segment data
 filename	db	'teste.txt', 0
-buffer		db	00,00,00,'$'
-input		db	00
-handle:	resw 1
+buffer		resb	4
+input:		resb	1
+handle:		resw 	1
+pointer:	resw 	1
 
 segment stack stack
 	resb 256
