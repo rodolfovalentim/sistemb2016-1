@@ -13,10 +13,10 @@ segment code
 	mov cx, 1
 	int 21h	
 
-	;mov [handle], ax
+	mov [handle], ax
 	;mov bx, buffer
 	;mov [pointer], bx
-;le:
+le:
  	mov ah, 3Fh
 	mov bx, [handle]
 	mov cx, 1
@@ -30,22 +30,22 @@ segment code
 
 	mov bx, buffer
 	mov dl, [input]
-	mov [bx], [byte dl]
+	mov byte[bx], dl
 	add bx, 1
 	mov byte[bx], 24h 	
 
 	mov dx, buffer
 	mov ah, 09h
 	int 21h
-	;jmp le
+	jmp le
 exit:
 	mov ah, 4Ch
 	int 21h
 	
 segment data
 filename	db	'teste.txt', 0
-buffer		resb	4
-input:		resb	1
+buffer		db	'a', 24h
+input		db	42h
 handle:		resw 	1
 pointer:	resw 	1
 
