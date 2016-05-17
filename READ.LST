@@ -1,5 +1,5 @@
      1                                  segment code
-     2                                  ..start
+     2                                  ..start:
      3 00000000 B8[0000]                	mov ax, data
      4 00000003 8ED8                    	mov ds, ax
      5 00000005 B8[0000]                	mov ax, stack
@@ -13,75 +13,74 @@
     13 00000014 B90100                  	mov cx, 1
     14 00000017 CD21                    	int 21h	
     15                                  
-    16 00000019 A3[0D00]                	mov [handle], ax
+    16 00000019 A3[0D00]                	mov word[handle], ax
     17 0000001C BB[1100]                	mov bx, image
-    18 0000001F 891E[0F00]              	mov [pointer], bx
+    18 0000001F 891E[0F00]              	mov word[pointer], bx
     19                                  read:
     20 00000023 B43F                     	mov ah, 3Fh
-    21 00000025 8B1E[0D00]              	mov bx, [handle]
+    21 00000025 8B1E[0D00]              	mov bx, word[handle]
     22 00000029 B90100                  	mov cx, 1
     23 0000002C BA[0C00]                	mov dx, input
     24 0000002F CD21                    	int 21h
-    25                                  
-    26                                  	;compara com o espaço
-    27 00000031 8A16[0C00]              	mov dl, [input]
-    28 00000035 80FA20                  	cmp dl, 20h
-    29 00000038 741D                    	je store
-    30 0000003A 39C8                    	cmp ax, cx
-    31 0000003C 7C34                    	jl finishread
-    32 0000003E A0[0B00]                	mov al, [buffer]
-    33 00000041 80EA30                  	sub dl, '0'
-    34 00000044 80FA00                  	cmp dl, 0
-    35 00000047 7C29                    	jl finishread
-    36 00000049 B30A                    	mov bl, 0ah
-    37 0000004B F6E3                    	mul bl
-    38 0000004D 00D0                    	add al, dl
-    39 0000004F BB[0B00]                	mov bx, buffer
-    40 00000052 8807                    	mov byte[bx], al
-    41 00000054 E9CCFF                  	jmp read
-    42                                  	
-    43                                  store:
-    44 00000057 8B1E[0F00]              	mov bx, [pointer]
-    45 0000005B 8A16[0B00]              	mov dl, [buffer]
-    46 0000005F 8817                    	mov byte[bx], dl
-    47 00000061 891E[0F00]              	mov [pointer], bx
-    48 00000065 FF06[0F00]              	inc word[pointer]
-    49 00000069 BB[0B00]                	mov bx, buffer
-    50 0000006C C60700                  	mov byte[bx], 00h
-    51 0000006F E9B1FF                  	jmp read
-    52                                  
-    53                                  finishread:
-    54 00000072 8B1E[0F00]              	mov bx, [pointer]
-    55 00000076 8A16[0B00]              	mov dl, [buffer]
-    56 0000007A 8817                    	mov byte[bx], dl
-    57 0000007C 891E[0F00]              	mov [pointer], bx
-    58 00000080 FF06[0F00]              	inc word[pointer]
-    59 00000084 BB[0B00]                	mov bx, buffer
-    60 00000087 C60700                  	mov byte[bx], 00h
-    61 0000008A E90000                  	jmp print	
-    62                                  
-    63                                  print:
-    64 0000008D 8B1E[0F00]              	mov bx, [pointer]
-    65 00000091 C60724                  	mov byte[bx], '$'
-    66 00000094 891E[0F00]              	mov [pointer], bx
-    67 00000098 BA[1100]                	mov dx, image
-    68 0000009B B409                    	mov ah, 09h
-    69 0000009D CD21                    	int 21h
-    70                                  	
-    71                                  exit:
-    72 0000009F B44C                    	mov ah, 4Ch
-    73 000000A1 CD21                    	int 21h
-    74                                  	
-    75                                  segment data
-    76 00000000 696D6167656D2E7478-     filename	db	'imagem.txt', 0
-    77 00000009 7400               
-    78 0000000B 00                      buffer		db	0
-    79 0000000C 00                      input		db	0
-    80 0000000D <res 00000002>          handle:		resw 	1
-    81 0000000F 0100                    pointer		dw 	1
-    82 00000011 <res 0000F424>          image		resb  62500
-    83 0000F435 0000                    samples		dw	0
-    84                                  
-    85                                  segment stack stack
-    86 00000000 <res 00000100>          	resb 256
-    87                                  stacktop:
+    25                                  	
+    26 00000031 39C8                    	cmp ax, cx
+    27 00000033 7C38                    	jl finishread
+    28                                  	
+    29                                  	;compara com o espaço
+    30 00000035 8A16[0C00]              	mov dl, byte[input]
+    31 00000039 80FA20                  	cmp dl, 20h
+    32 0000003C 7414                    	je store
+    33 0000003E A0[0B00]                	mov al, byte[buffer]
+    34 00000041 80EA30                  	sub dl, '0'
+    35 00000044 B30A                    	mov bl, 0ah
+    36 00000046 F6E3                    	mul bl
+    37 00000048 00D0                    	add al, dl
+    38 0000004A BB[0B00]                	mov bx, buffer
+    39 0000004D 8807                    	mov byte[bx], al
+    40 0000004F E9D1FF                  	jmp read
+    41                                  	
+    42                                  store:
+    43 00000052 8B1E[0F00]              	mov bx, word[pointer]
+    44 00000056 8A16[0B00]              	mov dl, byte[buffer]
+    45 0000005A 8817                    	mov byte[bx], dl
+    46 0000005C 891E[0F00]              	mov [pointer], bx
+    47 00000060 FF06[0F00]              	inc word[pointer]
+    48 00000064 BB[0B00]                	mov bx, buffer
+    49 00000067 C60700                  	mov byte[bx], 00h
+    50 0000006A E9B6FF                  	jmp read
+    51                                  
+    52                                  finishread:
+    53 0000006D 8B1E[0F00]              	mov bx, [pointer]
+    54 00000071 8A16[0B00]              	mov dl, [buffer]
+    55 00000075 8817                    	mov byte[bx], dl
+    56 00000077 891E[0F00]              	mov [pointer], bx
+    57 0000007B FF06[0F00]              	inc word[pointer]
+    58 0000007F BB[0B00]                	mov bx, buffer
+    59 00000082 C60700                  	mov byte[bx], 00h
+    60 00000085 E90000                  	jmp print	
+    61                                  
+    62                                  print:
+    63 00000088 8B1E[0F00]              	mov bx, word[pointer]
+    64 0000008C C60724                  	mov byte[bx], '$'
+    65 0000008F 891E[0F00]              	mov word[pointer], bx
+    66 00000093 BA[1100]                	mov dx, image
+    67 00000096 B409                    	mov ah, 09h
+    68 00000098 CD21                    	int 21h
+    69                                  	
+    70                                  exit:
+    71 0000009A B44C                    	mov ah, 4Ch
+    72 0000009C CD21                    	int 21h
+    73                                  
+    74                                  segment data
+    75 00000000 696D6167656D2E7478-     filename	db	'imagem.txt', 0
+    76 00000009 7400               
+    77 0000000B 00                      buffer		db	0
+    78 0000000C 00                      input		db	0
+    79 0000000D 0000                    handle		dw 	0
+    80 0000000F 0100                    pointer		dw 	1
+    81 00000011 <res 0000F424>          image:		resb  62500
+    82                                  
+    83                                  segment stack stack
+    84 00000000 <res 00000100>          	resb 256
+    85                                  stacktop:
+    86                                  

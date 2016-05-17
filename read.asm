@@ -1,5 +1,5 @@
 segment code
-..start
+..start:
 	mov ax, data
 	mov ds, ax
 	mov ax, stack
@@ -13,26 +13,25 @@ segment code
 	mov cx, 1
 	int 21h	
 
-	mov [handle], ax
+	mov word[handle], ax
 	mov bx, image
-	mov [pointer], bx
+	mov word[pointer], bx
 read:
  	mov ah, 3Fh
-	mov bx, [handle]
+	mov bx, word[handle]
 	mov cx, 1
 	mov dx, input
 	int 21h
-
-	;compara com o espaço
-	mov dl, [input]
-	cmp dl, 20h
-	je store
+	
 	cmp ax, cx
 	jl finishread
-	mov al, [buffer]
+	
+	;compara com o espaço
+	mov dl, byte[input]
+	cmp dl, 20h
+	je store
+	mov al, byte[buffer]
 	sub dl, '0'
-	cmp dl, 0
-	jl finishread
 	mov bl, 0ah
 	mul bl
 	add al, dl
@@ -41,8 +40,8 @@ read:
 	jmp read
 	
 store:
-	mov bx, [pointer]
-	mov dl, [buffer]
+	mov bx, word[pointer]
+	mov dl, byte[buffer]
 	mov byte[bx], dl
 	mov [pointer], bx
 	inc word[pointer]
@@ -61,9 +60,9 @@ finishread:
 	jmp print	
 
 print:
-	mov bx, [pointer]
+	mov bx, word[pointer]
 	mov byte[bx], '$'
-	mov [pointer], bx
+	mov word[pointer], bx
 	mov dx, image
 	mov ah, 09h
 	int 21h
@@ -71,16 +70,16 @@ print:
 exit:
 	mov ah, 4Ch
 	int 21h
-	
+
 segment data
 filename	db	'imagem.txt', 0
 buffer		db	0
 input		db	0
-handle:		resw 	1
+handle		dw 	0
 pointer		dw 	1
-image		resb  62500
-samples		dw	0
+image:		resb  62500
 
 segment stack stack
 	resb 256
 stacktop:
+
