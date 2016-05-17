@@ -13,45 +13,53 @@
     13 00000014 B90100                  	mov cx, 1
     14 00000017 CD21                    	int 21h	
     15                                  
-    16 00000019 A3[0F00]                	mov [handle], ax
+    16 00000019 A3[0D00]                	mov [handle], ax
     17 0000001C BB[0A00]                	mov bx, buffer
-    18 0000001F 891E[1100]              	mov [pointer], bx
+    18 0000001F 891E[0F00]              	mov [pointer], bx
     19                                  le:
     20 00000023 B43F                     	mov ah, 3Fh
-    21 00000025 8B1E[0F00]              	mov bx, [handle]
+    21 00000025 8B1E[0D00]              	mov bx, [handle]
     22 00000029 B90100                  	mov cx, 1
-    23 0000002C BA[0E00]                	mov dx, input
+    23 0000002C BA[0C00]                	mov dx, input
     24 0000002F CD21                    	int 21h
     25                                  
     26                                  	;compara com o espaço
-    27 00000031 8A16[0E00]              	mov dl, [input]
+    27 00000031 8A16[0C00]              	mov dl, [input]
     28 00000035 80FA20                  	cmp dl, 20h
-    29 00000038 7415                    	je imprime
-    30                                  
-    31 0000003A 8B1E[1100]              	mov bx, [pointer]
-    32 0000003E 8A16[0E00]              	mov dl, [input]
-    33 00000042 8817                    	mov byte[bx], dl
-    34 00000044 891E[1100]              	mov [pointer], bx
-    35 00000048 FF06[1100]              	inc word[pointer]
-    36 0000004C E9D4FF                  	jmp le
-    37                                  
-    38                                  imprime:
-    39 0000004F BA[0A00]                	mov dx, buffer
-    40 00000052 B409                    	mov ah, 09h
-    41 00000054 CD21                    	int 21h
-    42                                  	
-    43                                  exit:
-    44 00000056 B44C                    	mov ah, 4Ch
-    45 00000058 CD21                    	int 21h
-    46                                  	
-    47                                  segment data
-    48 00000000 74657374652E747874-     filename	db	'teste.txt', 0
-    49 00000009 00                 
-    50 0000000A 61616124                buffer		db	'a', 'a', 'a', 24h
-    51 0000000E 42                      input		db	42h
-    52 0000000F <res 00000002>          handle:		resw 	1
-    53 00000011 0100                    pointer		dw 	1
-    54                                  
-    55                                  segment stack stack
-    56 00000000 <res 00000100>          	resb 256
-    57                                  stacktop:
+    29 00000038 742A                    	je imprime	
+    30 0000003A A0[0A00]                	mov al, [buffer]
+    31 0000003D B30A                    	mov bl, 0ah
+    32 0000003F F6E3                    	mul bl
+    33 00000041 80EA30                  	sub dl, '0'
+    34 00000044 00D0                    	add al, dl
+    35 00000046 8B1E[0F00]              	mov bx, [pointer]
+    36 0000004A 8807                    	mov byte[bx], al
+    37 0000004C E9D4FF                  	jmp le
+    38                                  	
+    39 0000004F 8B1E[0F00]              	mov bx, [pointer]
+    40 00000053 8A16[0C00]              	mov dl, [input]
+    41 00000057 8817                    	mov byte[bx], dl
+    42 00000059 891E[0F00]              	mov [pointer], bx
+    43 0000005D FF06[0F00]              	inc word[pointer]
+    44 00000061 E9BFFF                  	jmp le
+    45                                  
+    46                                  imprime:
+    47 00000064 BA[0A00]                	mov dx, buffer
+    48 00000067 B409                    	mov ah, 09h
+    49 00000069 CD21                    	int 21h
+    50                                  	
+    51                                  exit:
+    52 0000006B B44C                    	mov ah, 4Ch
+    53 0000006D CD21                    	int 21h
+    54                                  	
+    55                                  segment data
+    56 00000000 74657374652E747874-     filename	db	'teste.txt', 0
+    57 00000009 00                 
+    58 0000000A 0024                    buffer		db	0, 24h
+    59 0000000C 00                      input		db	0
+    60 0000000D <res 00000002>          handle:		resw 	1
+    61 0000000F 0100                    pointer		dw 	1
+    62                                  
+    63                                  segment stack stack
+    64 00000000 <res 00000100>          	resb 256
+    65                                  stacktop:

@@ -26,8 +26,16 @@ le:
 	;compara com o espaço
 	mov dl, [input]
 	cmp dl, 20h
-	je imprime
-
+	je imprime	
+	mov al, [buffer]
+	mov bl, 0ah
+	mul bl
+	sub dl, '0'
+	add al, dl
+	mov bx, [pointer]
+	mov byte[bx], al
+	jmp le
+	
 	mov bx, [pointer]
 	mov dl, [input]
 	mov byte[bx], dl
@@ -46,8 +54,8 @@ exit:
 	
 segment data
 filename	db	'teste.txt', 0
-buffer		db	'a', 'a', 'a', 24h
-input		db	42h
+buffer		db	0, 24h
+input		db	0
 handle:		resw 	1
 pointer		dw 	1
 
