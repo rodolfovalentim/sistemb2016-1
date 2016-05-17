@@ -13,43 +13,44 @@
     13 00000014 B90100                  	mov cx, 1
     14 00000017 CD21                    	int 21h	
     15                                  
-    16 00000019 A3[0D00]                	mov [handle], ax
+    16 00000019 A3[1200]                	mov [handle], ax
     17                                  	;mov bx, buffer
     18                                  	;mov [pointer], bx
     19                                  le:
     20 0000001C B43F                     	mov ah, 3Fh
-    21 0000001E 8B1E[0D00]              	mov bx, [handle]
+    21 0000001E 8B1E[1200]              	mov bx, [handle]
     22 00000022 B90100                  	mov cx, 1
-    23 00000025 BA[0C00]                	mov dx, input
+    23 00000025 BA[1100]                	mov dx, input
     24 00000028 CD21                    	int 21h
     25                                  
     26                                  	;compara com o espaço
-    27 0000002A 8A16[0C00]              	mov dl, [input]
+    27 0000002A 8A16[1100]              	mov dl, [input]
     28 0000002E 80FA20                  	cmp dl, 20h
-    29 00000031 741A                    	je exit
+    29 00000031 7418                    	je exit
     30                                  
     31 00000033 BB[0A00]                	mov bx, buffer
-    32 00000036 8A16[0C00]              	mov dl, [input]
+    32 00000036 8A16[1100]              	mov dl, [input]
     33 0000003A 8817                    	mov byte[bx], dl
-    34 0000003C 81C30100                	add bx, 1
-    35 00000040 C60724                  	mov byte[bx], 24h 	
-    36                                  
-    37 00000043 BA[0A00]                	mov dx, buffer
-    38 00000046 B409                    	mov ah, 09h
-    39 00000048 CD21                    	int 21h
-    40 0000004A E9CFFF                  	jmp le
-    41                                  exit:
-    42 0000004D B44C                    	mov ah, 4Ch
-    43 0000004F CD21                    	int 21h
-    44                                  	
-    45                                  segment data
-    46 00000000 74657374652E747874-     filename	db	'teste.txt', 0
-    47 00000009 00                 
-    48 0000000A 6124                    buffer		db	'a', 24h
-    49 0000000C 42                      input		db	42h
-    50 0000000D <res 00000002>          handle:		resw 	1
-    51 0000000F <res 00000002>          pointer:	resw 	1
-    52                                  
-    53                                  segment stack stack
-    54 00000000 <res 00000100>          	resb 256
-    55                                  stacktop:
+    34                                  	;add bx, 1
+    35 0000003C 8B07                    	mov ax, [bx]
+    36 0000003E A3[0A00]                	mov [buffer], ax
+    37                                  
+    38 00000041 BA[0A00]                	mov dx, buffer
+    39 00000044 B409                    	mov ah, 09h
+    40 00000046 CD21                    	int 21h
+    41 00000048 E9D1FF                  	jmp le
+    42                                  exit:
+    43 0000004B B44C                    	mov ah, 4Ch
+    44 0000004D CD21                    	int 21h
+    45                                  	
+    46                                  segment data
+    47 00000000 74657374652E747874-     filename	db	'teste.txt', 0
+    48 00000009 00                 
+    49 0000000A 00616161616124          buffer		db	00, 'a', 'a', 'a', 'a', 'a', 24h
+    50 00000011 42                      input		db	42h
+    51 00000012 <res 00000002>          handle:		resw 	1
+    52 00000014 <res 00000002>          pointer:	resw 	1
+    53                                  
+    54                                  segment stack stack
+    55 00000000 <res 00000100>          	resb 256
+    56                                  stacktop:

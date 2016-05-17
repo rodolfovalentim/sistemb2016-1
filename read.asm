@@ -31,8 +31,9 @@ le:
 	mov bx, buffer
 	mov dl, [input]
 	mov byte[bx], dl
-	add bx, 1
-	mov byte[bx], 24h 	
+	;add bx, 1
+	mov ax, [bx]
+	mov [buffer], ax
 
 	mov dx, buffer
 	mov ah, 09h
@@ -44,7 +45,7 @@ exit:
 	
 segment data
 filename	db	'teste.txt', 0
-buffer		db	'a', 24h
+buffer		db	00, 'a', 'a', 'a', 'a', 'a', 24h
 input		db	42h
 handle:		resw 	1
 pointer:	resw 	1
