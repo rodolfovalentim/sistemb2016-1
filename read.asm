@@ -14,8 +14,8 @@ segment code
 	int 21h	
 
 	mov [handle], ax
-	;mov bx, buffer
-	;mov [pointer], bx
+	mov bx, buffer
+	mov [pointer], bx
 le:
  	mov ah, 3Fh
 	mov bx, [handle]
@@ -26,29 +26,30 @@ le:
 	;compara com o espaço
 	mov dl, [input]
 	cmp dl, 20h
-	je exit
+	je imprime
 
-	mov bx, buffer
+	mov bx, [pointer]
 	mov dl, [input]
 	mov byte[bx], dl
-	;add bx, 1
-	mov ax, [bx]
-	mov [buffer], ax
+	mov [pointer], bx
+	inc word[pointer]
+	jmp le
 
+imprime:
 	mov dx, buffer
 	mov ah, 09h
 	int 21h
-	jmp le
+	
 exit:
 	mov ah, 4Ch
 	int 21h
 	
 segment data
 filename	db	'teste.txt', 0
-buffer		db	00, 'a', 'a', 'a', 'a', 'a', 24h
+buffer		db	'a', 'a', 'a', 24h
 input		db	42h
 handle:		resw 	1
-pointer:	resw 	1
+pointer		dw 	1
 
 segment stack stack
 	resb 256
