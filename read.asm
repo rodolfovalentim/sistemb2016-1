@@ -14,9 +14,9 @@ segment code
 	int 21h	
 
 	mov [handle], ax
-	mov bx, buffer
+	mov bx, image
 	mov [pointer], bx
-le:
+read:
  	mov ah, 3Fh
 	mov bx, [handle]
 	mov cx, 1
@@ -26,25 +26,45 @@ le:
 	;compara com o espaço
 	mov dl, [input]
 	cmp dl, 20h
-	je imprime	
+	je store
+	cmp ax, cx
+	jl finishread
 	mov al, [buffer]
+	sub dl, '0'
+	cmp dl, 0
+	jl finishread
 	mov bl, 0ah
 	mul bl
-	sub dl, '0'
 	add al, dl
-	mov bx, [pointer]
+	mov bx, buffer
 	mov byte[bx], al
-	jmp le
+	jmp read
 	
+store:
 	mov bx, [pointer]
-	mov dl, [input]
+	mov dl, [buffer]
 	mov byte[bx], dl
 	mov [pointer], bx
 	inc word[pointer]
-	jmp le
+	mov bx, buffer
+	mov byte[bx], 00h
+	jmp read
 
-imprime:
-	mov dx, buffer
+finishread:
+	mov bx, [pointer]
+	mov dl, [buffer]
+	mov byte[bx], dl
+	mov [pointer], bx
+	inc word[pointer]
+	mov bx, buffer
+	mov byte[bx], 00h
+	jmp print	
+
+print:
+	mov bx, [pointer]
+	mov byte[bx], '$'
+	mov [pointer], bx
+	mov dx, image
 	mov ah, 09h
 	int 21h
 	
@@ -53,11 +73,13 @@ exit:
 	int 21h
 	
 segment data
-filename	db	'teste.txt', 0
-buffer		db	0, 24h
+filename	db	'imagem.txt', 0
+buffer		db	0
 input		db	0
 handle:		resw 	1
 pointer		dw 	1
+image		resb  62500
+samples		dw	0
 
 segment stack stack
 	resb 256
