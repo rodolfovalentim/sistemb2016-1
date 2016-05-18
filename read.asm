@@ -35,8 +35,7 @@ read:
 	mov bl, 0ah
 	mul bl
 	add al, dl
-	mov bx, buffer
-	mov byte[bx], al
+	mov byte[buffer], al
 	jmp read
 	
 store:
@@ -45,8 +44,7 @@ store:
 	mov byte[bx], dl
 	mov [pointer], bx
 	inc word[pointer]
-	mov bx, buffer
-	mov byte[bx], 00h
+	mov byte[buffer], 00h
 	jmp read
 
 finishread:
@@ -55,8 +53,7 @@ finishread:
 	mov byte[bx], dl
 	mov [pointer], bx
 	inc word[pointer]
-	mov bx, buffer
-	mov byte[bx], 00h
+	mov byte[buffer], 00h
 	jmp print	
 
 print:
@@ -66,7 +63,26 @@ print:
 	mov dx, image
 	mov ah, 09h
 	int 21h
+	jmp cphist
+
+cphist:
+	mov bx, histogram
+	mov word[pointer], bx
+	mov cx, 10
+prox:
+	mov ah, 00h
+	mov al, byte[image] 
+	mov si, ax
+	mov byte[bx+si], al
+	inc word[image]
+	loop prox
 	
+printh:
+	mov dx, histogram
+	mov ah, 09h
+	int 21h
+	jmp exit
+
 exit:
 	mov ah, 4Ch
 	int 21h
@@ -77,7 +93,9 @@ buffer		db	0
 input		db	0
 handle		dw 	0
 pointer		dw 	1
-image:		resb  62500
+histogram:	times	256 db '0'
+fim1		db	'$'
+image:		resb  	62500
 
 segment stack stack
 	resb 256

