@@ -6,7 +6,7 @@ segment code
 	mov ss,	ax
 	mov sp, stacktop
 	
-	;abre arquivo
+					;abre arquivo
 	mov ah, 3Dh
 	mov al, 00
 	mov dx, filename
@@ -16,6 +16,7 @@ segment code
 	mov word[handle], ax
 	mov bx, image
 	mov word[pointer], bx
+
 read:
  	mov ah, 3Fh
 	mov bx, word[handle]
@@ -23,13 +24,18 @@ read:
 	mov dx, input
 	int 21h
 	
+					;verifica se o arquivo acabou	
 	cmp ax, cx
 	jl finishread
 	
-	;compara com o espaço
+					;compara com o espaço
 	mov dl, byte[input]
 	cmp dl, 20h
 	je store
+
+	cmp dl, '0'
+	jl read
+
 	mov al, byte[buffer]
 	sub dl, '0'
 	mov bl, 0ah
@@ -47,7 +53,7 @@ store:
 	mov byte[buffer], 00h
 	jmp read
 
-finishread:
+finishread: 				; termina a leitura da imagem
 	mov bx, [pointer]
 	mov dl, [buffer]
 	mov byte[bx], dl
@@ -56,7 +62,7 @@ finishread:
 	mov byte[buffer], 00h
 	jmp print	
 
-print:
+print:					;imprime a imagem na tela
 	mov bx, word[pointer]
 	mov byte[bx], '$'
 	mov word[pointer], bx
@@ -65,19 +71,19 @@ print:
 	int 21h
 	jmp cphist
 
-cphist:
-	mov bx, histogram
-	mov word[pointer], bx
-	mov cx, 10
+cphist: 				; computa histograma
+	mov bx, image
+	mov cx, 14
 prox:
 	mov ah, 00h
-	mov al, byte[image] 
+	mov al, byte[bx] 
 	mov si, ax
-	mov byte[bx+si], al
-	inc word[image]
+	add si, si
+	add word[histogram+si], 1
+	add bx, 1 			;anda na imagem
 	loop prox
 	
-printh:
+printh: 				;imprime histograma obtido
 	mov dx, histogram
 	mov ah, 09h
 	int 21h
@@ -88,14 +94,15 @@ exit:
 	int 21h
 
 segment data
-filename	db	'imagem.txt', 0
+filename	db	'teste.txt', 0
 buffer		db	0
 input		db	0
 handle		dw 	0
 pointer		dw 	1
-histogram:	times	256 db '0'
+histogram:	times	256 dw '00'
+eqhistogram:	times	256 dw '00'
 fim1		db	'$'
-image:		resb  	62500
+image:		resb  	14
 
 segment stack stack
 	resb 256
