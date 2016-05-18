@@ -73,7 +73,7 @@ print:					;imprime a imagem na tela
 
 cphist: 				; computa histograma
 	mov bx, image
-	mov cx, 14
+	mov cx, 1
 prox:
 	mov ah, 00h
 	mov al, byte[bx] 
@@ -82,12 +82,27 @@ prox:
 	add word[histogram+si], 1
 	add bx, 1 			;anda na imagem
 	loop prox
-	
+
 printh: 				;imprime histograma obtido
 	mov dx, histogram
 	mov ah, 09h
 	int 21h
-	jmp exit
+	int 3
+
+equalize:
+	mov si, histogram
+	mov di, eqhistogram
+	mov ax, [si]
+	mov [di], ax
+	add si, 2
+	mov cx, 255
+.iter:
+	mov ax, [si]
+	add [di+2], ax
+	mov ax, [di]
+	add [di+2], ax
+	add di, 2
+	loop .iter
 
 exit:
 	mov ah, 4Ch
@@ -99,10 +114,10 @@ buffer		db	0
 input		db	0
 handle		dw 	0
 pointer		dw 	1
-histogram:	times	256 dw '00'
-eqhistogram:	times	256 dw '00'
+histogram:	times	256 dw 0000h
+eqhistogram:	times	256 dw 0000h
 fim1		db	'$'
-image:		resb  	14
+image:		resb  	1
 
 segment stack stack
 	resb 256

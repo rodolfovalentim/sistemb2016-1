@@ -82,30 +82,45 @@
     82 000000AC 8184[1000]0100          	add word[histogram+si], 1
     83 000000B2 81C30100                	add bx, 1 			;anda na imagem
     84 000000B6 E2EC                    	loop prox
-    85                                  	
+    85                                  
     86                                  printh: 				;imprime histograma obtido
     87 000000B8 BA[1000]                	mov dx, histogram
     88 000000BB B409                    	mov ah, 09h
     89 000000BD CD21                    	int 21h
-    90 000000BF E90000                  	jmp exit
+    90 000000BF CD03                    	int 3
     91                                  
-    92                                  exit:
-    93 000000C2 B44C                    	mov ah, 4Ch
-    94 000000C4 CD21                    	int 21h
-    95                                  
-    96                                  segment data
-    97 00000000 74657374652E747874-     filename	db	'teste.txt', 0
-    98 00000009 00                 
-    99 0000000A 00                      buffer		db	0
-   100 0000000B 00                      input		db	0
-   101 0000000C 0000                    handle		dw 	0
-   102 0000000E 0100                    pointer		dw 	1
-   103 00000010 3030<rept>              histogram:	times	256 dw '00'
-   104 00000210 3030<rept>              eqhistogram:	times	256 dw '00'
-   105 00000410 24                      fim1		db	'$'
-   106 00000411 <res 0000000E>          image:		resb  	14
-   107                                  
-   108                                  segment stack stack
-   109 00000000 <res 00000100>          	resb 256
-   110                                  stacktop:
-   111                                  
+    92                                  equalize:
+    93 000000C1 BE[1000]                	mov si, histogram
+    94 000000C4 BF[1002]                	mov di, eqhistogram
+    95 000000C7 8B04                    	mov ax, [si]
+    96 000000C9 8905                    	mov [di], ax
+    97 000000CB 81C60200                	add si, 2
+    98 000000CF B90900                  	mov cx, 9
+    99                                  .iter:
+   100 000000D2 8B04                    	mov ax, [si]
+   101 000000D4 014502                  	add [di+2], ax
+   102 000000D7 8B05                    	mov ax, [di]
+   103 000000D9 014502                  	add [di+2], ax
+   104 000000DC 81C70200                	add di, 2
+   105 000000E0 E2F0                    	loop .iter
+   106                                  
+   107                                  exit:
+   108 000000E2 B44C                    	mov ah, 4Ch
+   109 000000E4 CD21                    	int 21h
+   110                                  
+   111                                  segment data
+   112 00000000 74657374652E747874-     filename	db	'teste.txt', 0
+   113 00000009 00                 
+   114 0000000A 00                      buffer		db	0
+   115 0000000B 00                      input		db	0
+   116 0000000C 0000                    handle		dw 	0
+   117 0000000E 0100                    pointer		dw 	1
+   118 00000010 3030<rept>              histogram:	times	256 dw '00'
+   119 00000210 3030<rept>              eqhistogram:	times	256 dw '00'
+   120 00000410 24                      fim1		db	'$'
+   121 00000411 <res 0000000E>          image:		resb  	14
+   122                                  
+   123                                  segment stack stack
+   124 00000000 <res 00000100>          	resb 256
+   125                                  stacktop:
+   126                                  

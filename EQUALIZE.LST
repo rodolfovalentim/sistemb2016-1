@@ -1,0 +1,35 @@
+     1                                  segment code
+     2                                  ..start:
+     3 00000000 B8[0000]                	mov ax, data
+     4 00000003 8ED8                    	mov ds, ax
+     5 00000005 B8[0000]                	mov ax, stack
+     6 00000008 8ED0                    	mov ss,	ax
+     7 0000000A BC[0001]                	mov sp, stacktop
+     8                                  
+     9                                  equalize:
+    10 0000000D BE[0000]                	mov si, histogram
+    11 00000010 BF[1400]                	mov di, eqhistogram
+    12 00000013 8B04                    	mov ax, [si]
+    13 00000015 8905                    	mov [di], ax
+    14 00000017 81C60200                	add si, 2
+    15 0000001B B90900                  	mov cx, 9
+    16                                  .iter:
+    17 0000001E 8B04                    	mov ax, [si]
+    18 00000020 014502                  	add [di+2], ax
+    19 00000023 8B05                    	mov ax, [di]
+    20 00000025 014502                  	add [di+2], ax
+    21 00000028 81C70200                	add di, 2
+    22 0000002C E2F0                    	loop .iter
+    23                                  
+    24                                  exit:
+    25 0000002E B44C                    	mov ah, 4Ch
+    26 00000030 CD21                    	int 21h
+    27                                  
+    28                                  segment data
+    29 00000000 0100<rept>              histogram:	times	10 dw 0001h
+    30 00000014 0000<rept>              eqhistogram:	times	10 dw 0000h
+    31 00000028 24                      fim1		db	'$'
+    32                                  
+    33                                  segment stack stack
+    34 00000000 <res 00000100>          	resb 256
+    35                                  stacktop:
