@@ -14,628 +14,741 @@
     14                                  	call	line
     15                                  %endmacro
     16                                  
-    17                                  
-    18                                  %macro writeword 3
-    19                                      	mov     bx,0
-    20                                      	mov     dh,%2			;linha 0-29
-    21                                      	mov     dl,%3			;coluna 0-79
-    22                                  %%local:
-    23                                  	call	cursor
-    24                                      	mov     al,[bx+%1]
-    25                                  	cmp	al, '$'
-    26                                  	je	%%exit
-    27                                  	call	caracter
-    28                                      	inc     bx			;proximo caracter
-    29                                  	inc	dl			;avanca a coluna
-    30                                      	jmp	%%local
-    31                                  %%exit:
-    32                                  %endmacro
-    33                                  
-    34                                  segment code
-    35                                  ..start:
-    36 00000000 B8[0000]                    	mov 	ax,data
-    37 00000003 8ED8                        	mov 	ds,ax
-    38 00000005 B8[0000]                    	mov 	ax,stack
-    39 00000008 8ED0                        	mov 	ss,ax
-    40 0000000A BC[0002]                    	mov 	sp,stacktop
-    41                                  
-    42                                  ; salvar modo corrente de video(vendo como est� o modo de video da maquina)
-    43 0000000D B40F                            mov 	ah,0Fh
-    44 0000000F CD10                        	int 	10h
-    45 00000011 A2[0100]                    	mov 	[modo_anterior],al   
-    46                                  
-    47                                  ; alterar modo de video para gr�fico 640x480 16 cores
-    48 00000014 B012                        	mov    	al,12h
-    49 00000016 B400                       	mov    	ah,0
-    50 00000018 CD10                        	int    	10h
-    51                                  	
-    52                                  ;escrever uma mensagem
-    53                                  
-    54                                  	writeword mens,1,10
-    55 0000001A BB0000              <1>     	mov     bx,0
-    56 0000001D B601                <1>     	mov     dh,%2
-    57 0000001F B20A                <1>     	mov     dl,%3
-    58                              <1> %%local:
-    59 00000021 E82100              <1> 	call	cursor
-    60 00000024 8A87[0A00]          <1>     	mov     al,[bx+%1]
-    61 00000028 3C24                <1> 	cmp	al, '$'
-    62 0000002A 7409                <1> 	je	%%exit
-    63 0000002C E82D00              <1> 	call	caracter
-    64 0000002F 43                  <1>     	inc     bx
-    65 00000030 FEC2                <1> 	inc	dl
-    66 00000032 E9ECFF              <1>     	jmp	%%local
-    67                              <1> %%exit:
-    68                                  
-    69 00000035 B408                    	mov    	ah,08h
-    70 00000037 CD21                    	int     21h
-    71 00000039 B400                    	mov  	ah,0   			; set video mode
-    72 0000003B A0[0100]                	mov  	al,[modo_anterior]   	; modo anterior
-    73 0000003E CD10                    	int  	10h
-    74 00000040 B8004C                  	mov     ax,4c00h
-    75 00000043 CD21                    	int     21h
-    76                                  ;***************************************************************************
-    77                                  ; função cursor
-    78                                  ; dh = linha (0-29) e  dl=coluna  (0-79)
-    79                                  ;***************************************************************************
-    80                                  cursor:
-    81 00000045 9C                      	pushf
-    82 00000046 50                      	push 	ax
-    83 00000047 53                      	push 	bx
-    84 00000048 51                      	push	cx
-    85 00000049 52                      	push	dx
-    86 0000004A 56                      	push	si
-    87 0000004B 57                      	push	di
-    88 0000004C 55                      	push	bp
-    89 0000004D B402                    	mov    	ah,2
-    90 0000004F B700                    	mov    	bh,0
-    91 00000051 CD10                    	int    	10h
-    92 00000053 5D                      	pop	bp
-    93 00000054 5F                      	pop	di
-    94 00000055 5E                      	pop	si
-    95 00000056 5A                      	pop	dx
-    96 00000057 59                      	pop	cx
-    97 00000058 5B                      	pop	bx
-    98 00000059 58                      	pop	ax
-    99 0000005A 9D                      	popf
-   100 0000005B C3                      	ret
-   101                                  ;_____________________________________________________________________________
-   102                                  ;
-   103                                  ;   fun��o caracter escrito na posi��o do cursor
-   104                                  ;
-   105                                  ; al= caracter a ser escrito
-   106                                  ; cor definida na variavel cor
-   107                                  caracter:
-   108 0000005C 9C                      	pushf
-   109 0000005D 50                      	push	ax
-   110 0000005E 53                      	push	bx
-   111 0000005F 51                      	push	cx
-   112 00000060 52                      	push	dx
-   113 00000061 56                      	push	si
-   114 00000062 57                      	push	di
-   115 00000063 55                      	push	bp
-   116 00000064 B409                        	mov    	ah,9
-   117 00000066 B700                        	mov    	bh,0
-   118 00000068 B90100                      	mov    	cx,1
-   119 0000006B 8A1E[0000]                 	mov    	bl,[cor]
-   120 0000006F CD10                        	int    	10h
-   121 00000071 5D                      	pop	bp
-   122 00000072 5F                      	pop	di
-   123 00000073 5E                      	pop	si
-   124 00000074 5A                      	pop	dx
-   125 00000075 59                      	pop	cx
-   126 00000076 5B                      	pop	bx
-   127 00000077 58                      	pop	ax
-   128 00000078 9D                      	popf
-   129 00000079 C3                      	ret
-   130                                  ;_____________________________________________________________________________
-   131                                  ;
-   132                                  ;   função plot_xy
-   133                                  ;
-   134                                  ; push x; push y; call plot_xy;  (x<639, y<479)
-   135                                  ; cor definida na variavel cor
-   136                                  plot_xy:
-   137 0000007A 55                      	push	bp
-   138 0000007B 89E5                    	mov	bp,sp
-   139 0000007D 9C                      	pushf
-   140 0000007E 50                      	push 	ax
-   141 0000007F 53                      	push 	bx
-   142 00000080 51                      	push	cx
-   143 00000081 52                      	push	dx
-   144 00000082 56                      	push	si
-   145 00000083 57                      	push	di
-   146 00000084 B40C                    	mov    	ah,0ch
-   147 00000086 A0[0000]                	mov    	al,[cor]
-   148 00000089 B700                    	mov    	bh,0
-   149 0000008B BADF01                  	mov    	dx,479
-   150 0000008E 2B5604                  	sub	dx,[bp+4]
-   151 00000091 8B4E06                  	mov    	cx,[bp+6]
-   152 00000094 CD10                    	int    	10h
-   153 00000096 5F                      	pop	di
-   154 00000097 5E                      	pop	si
-   155 00000098 5A                      	pop	dx
-   156 00000099 59                      	pop	cx
-   157 0000009A 5B                      	pop	bx
-   158 0000009B 58                      	pop	ax
-   159 0000009C 9D                      	popf
-   160 0000009D 5D                      	pop	bp
-   161 0000009E C20400                  	ret	4
-   162                                  ;_____________________________________________________________________________
-   163                                  ;    fun��o circle
-   164                                  ;	 push xc; push yc; push r; call circle;  (xc+r<639,yc+r<479)e(xc-r>0,yc-r>0)
-   165                                  ; cor definida na variavel cor
-   166                                  circle:
-   167 000000A1 55                      	push 	bp
-   168 000000A2 89E5                    	mov	bp,sp
-   169 000000A4 9C                      	pushf                        ;coloca os flags na pilha
-   170 000000A5 50                      	push 	ax
-   171 000000A6 53                      	push 	bx
-   172 000000A7 51                      	push	cx
-   173 000000A8 52                      	push	dx
-   174 000000A9 56                      	push	si
-   175 000000AA 57                      	push	di
-   176 000000AB 8B4608                  	mov	ax,[bp+8]    ; resgata xc
-   177 000000AE 8B5E06                  	mov	bx,[bp+6]    ; resgata yc
-   178 000000B1 8B4E04                  	mov	cx,[bp+4]    ; resgata r
-   179 000000B4 89DA                    	mov 	dx,bx	
-   180 000000B6 01CA                    	add	dx,cx       ;ponto extremo superior
-   181 000000B8 50                      	push    ax			
-   182 000000B9 52                      	push	dx
-   183 000000BA E8BDFF                  	call	plot_xy
-   184 000000BD 89DA                    	mov	dx,bx
-   185 000000BF 29CA                    	sub	dx,cx       ;ponto extremo inferior
-   186 000000C1 50                      	push    ax			
-   187 000000C2 52                      	push	dx
-   188 000000C3 E8B4FF                  	call 	plot_xy
-   189 000000C6 89C2                    	mov 	dx,ax	
-   190 000000C8 01CA                    	add	dx,cx       ;ponto extremo direita
-   191 000000CA 52                      	push    dx			
-   192 000000CB 53                      	push	bx
-   193 000000CC E8ABFF                  	call	plot_xy
-   194 000000CF 89C2                    	mov	dx,ax
-   195 000000D1 29CA                    	sub	dx,cx       ;ponto extremo esquerda
-   196 000000D3 52                      	push    dx			
-   197 000000D4 53                      	push	bx
-   198 000000D5 E8A2FF                  	call	plot_xy
-   199 000000D8 89CF                    	mov	di,cx
-   200 000000DA 81EF0100                	sub	di,1	 ;di=r-1
-   201 000000DE BA0000                  	mov	dx,0  	;dx ser� a vari�vel x. cx � a variavel y
-   202                                  	
-   203                                  ;aqui em cima a l�gica foi invertida, 1-r => r-1
-   204                                  ;e as compara��es passaram a ser jl => jg, assim garante 
-   205                                  ;valores positivos para d
-   206                                  
-   207                                  stay:				;loop
-   208 000000E1 89FE                    	mov		si,di
-   209 000000E3 81FE0000                	cmp		si,0
-   210 000000E7 7F0E                    	jg		inf       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
-   211 000000E9 89D6                    	mov		si,dx		;o jl � importante porque trata-se de conta com sinal
-   212 000000EB D1E6                    	sal		si,1		;multiplica por doi (shift arithmetic left)
-   213 000000ED 81C60300                	add		si,3
-   214 000000F1 01F7                    	add		di,si     ;nesse ponto d=d+2*dx+3
-   215 000000F3 42                      	inc		dx		;incrementa dx
-   216 000000F4 E90E00                  	jmp		plotar
-   217                                  inf:	
-   218 000000F7 89D6                    	mov		si,dx
-   219 000000F9 29CE                    	sub		si,cx  		;faz x - y (dx-cx), e salva em di 
-   220 000000FB D1E6                    	sal		si,1
-   221 000000FD 81C60500                	add		si,5
-   222 00000101 01F7                    	add		di,si		;nesse ponto d=d+2*(dx-cx)+5
-   223 00000103 42                      	inc		dx		;incrementa x (dx)
-   224 00000104 49                      	dec		cx		;decrementa y (cx)
-   225                                  	
-   226                                  plotar:	
-   227 00000105 89D6                    	mov		si,dx
-   228 00000107 01C6                    	add		si,ax
-   229 00000109 56                      	push    si			;coloca a abcisa x+xc na pilha
-   230 0000010A 89CE                    	mov		si,cx
-   231 0000010C 01DE                    	add		si,bx
-   232 0000010E 56                      	push    si			;coloca a ordenada y+yc na pilha
-   233 0000010F E868FF                  	call plot_xy		;toma conta do segundo octante
-   234 00000112 89C6                    	mov		si,ax
-   235 00000114 01D6                    	add		si,dx
-   236 00000116 56                      	push    si			;coloca a abcisa xc+x na pilha
-   237 00000117 89DE                    	mov		si,bx
-   238 00000119 29CE                    	sub		si,cx
-   239 0000011B 56                      	push    si			;coloca a ordenada yc-y na pilha
-   240 0000011C E85BFF                  	call plot_xy		;toma conta do s�timo octante
-   241 0000011F 89C6                    	mov		si,ax
-   242 00000121 01CE                    	add		si,cx
-   243 00000123 56                      	push    si			;coloca a abcisa xc+y na pilha
-   244 00000124 89DE                    	mov		si,bx
-   245 00000126 01D6                    	add		si,dx
-   246 00000128 56                      	push    si			;coloca a ordenada yc+x na pilha
-   247 00000129 E84EFF                  	call plot_xy		;toma conta do segundo octante
-   248 0000012C 89C6                    	mov		si,ax
-   249 0000012E 01CE                    	add		si,cx
-   250 00000130 56                      	push    si			;coloca a abcisa xc+y na pilha
-   251 00000131 89DE                    	mov		si,bx
-   252 00000133 29D6                    	sub		si,dx
-   253 00000135 56                      	push    si			;coloca a ordenada yc-x na pilha
-   254 00000136 E841FF                  	call plot_xy		;toma conta do oitavo octante
-   255 00000139 89C6                    	mov		si,ax
-   256 0000013B 29D6                    	sub		si,dx
-   257 0000013D 56                      	push    si			;coloca a abcisa xc-x na pilha
-   258 0000013E 89DE                    	mov		si,bx
-   259 00000140 01CE                    	add		si,cx
-   260 00000142 56                      	push    si			;coloca a ordenada yc+y na pilha
-   261 00000143 E834FF                  	call plot_xy		;toma conta do terceiro octante
-   262 00000146 89C6                    	mov		si,ax
-   263 00000148 29D6                    	sub		si,dx
-   264 0000014A 56                      	push    si			;coloca a abcisa xc-x na pilha
-   265 0000014B 89DE                    	mov		si,bx
-   266 0000014D 29CE                    	sub		si,cx
-   267 0000014F 56                      	push    si			;coloca a ordenada yc-y na pilha
-   268 00000150 E827FF                  	call plot_xy		;toma conta do sexto octante
-   269 00000153 89C6                    	mov		si,ax
-   270 00000155 29CE                    	sub		si,cx
-   271 00000157 56                      	push    si			;coloca a abcisa xc-y na pilha
-   272 00000158 89DE                    	mov		si,bx
-   273 0000015A 29D6                    	sub		si,dx
-   274 0000015C 56                      	push    si			;coloca a ordenada yc-x na pilha
-   275 0000015D E81AFF                  	call plot_xy		;toma conta do quinto octante
-   276 00000160 89C6                    	mov		si,ax
-   277 00000162 29CE                    	sub		si,cx
-   278 00000164 56                      	push    si			;coloca a abcisa xc-y na pilha
-   279 00000165 89DE                    	mov		si,bx
-   280 00000167 01D6                    	add		si,dx
-   281 00000169 56                      	push    si			;coloca a ordenada yc-x na pilha
-   282 0000016A E80DFF                  	call plot_xy		;toma conta do quarto octante
-   283                                  	
-   284 0000016D 39D1                    	cmp		cx,dx
-   285 0000016F 7203                    	jb		fim_circle  ;se cx (y) est� abaixo de dx (x), termina     
-   286 00000171 E96DFF                  	jmp		stay		;se cx (y) est� acima de dx (x), continua no loop
-   287                                  	
-   288                                  	
-   289                                  fim_circle:
-   290 00000174 5F                      	pop		di
-   291 00000175 5E                      	pop		si
-   292 00000176 5A                      	pop		dx
-   293 00000177 59                      	pop		cx
-   294 00000178 5B                      	pop		bx
-   295 00000179 58                      	pop		ax
-   296 0000017A 9D                      	popf
-   297 0000017B 5D                      	pop		bp
-   298 0000017C C20600                  	ret		6
-   299                                  ;-----------------------------------------------------------------------------
-   300                                  ;    fun��o full_circle
-   301                                  ;	 push xc; push yc; push r; call full_circle;  (xc+r<639,yc+r<479)e(xc-r>0,yc-r>0)
-   302                                  ; cor definida na variavel cor					  
-   303                                  full_circle:
-   304 0000017F 55                      	push 	bp
-   305 00000180 89E5                    	mov	 	bp,sp
-   306 00000182 9C                      	pushf                        ;coloca os flags na pilha
-   307 00000183 50                      	push 	ax
-   308 00000184 53                      	push 	bx
-   309 00000185 51                      	push	cx
-   310 00000186 52                      	push	dx
-   311 00000187 56                      	push	si
-   312 00000188 57                      	push	di
-   313                                  
-   314 00000189 8B4608                  	mov		ax,[bp+8]    ; resgata xc
-   315 0000018C 8B5E06                  	mov		bx,[bp+6]    ; resgata yc
-   316 0000018F 8B4E04                  	mov		cx,[bp+4]    ; resgata r
-   317                                  	
-   318 00000192 89DE                    	mov		si,bx
-   319 00000194 29CE                    	sub		si,cx
-   320 00000196 50                      	push    ax			;coloca xc na pilha			
-   321 00000197 56                      	push	si			;coloca yc-r na pilha
-   322 00000198 89DE                    	mov		si,bx
-   323 0000019A 01CE                    	add		si,cx
-   324 0000019C 50                      	push	ax		;coloca xc na pilha
-   325 0000019D 56                      	push	si		;coloca yc+r na pilha
-   326 0000019E E89B00                  	call line
-   327                                  	
-   328                                  		
-   329 000001A1 89CF                    	mov		di,cx
-   330 000001A3 81EF0100                	sub		di,1	 ;di=r-1
-   331 000001A7 BA0000                  	mov		dx,0  	;dx ser� a vari�vel x. cx � a variavel y
-   332                                  	
-   333                                  ;aqui em cima a l�gica foi invertida, 1-r => r-1
-   334                                  ;e as compara��es passaram a ser jl => jg, assim garante 
-   335                                  ;valores positivos para d
-   336                                  
-   337                                  stay_full:				;loop
-   338 000001AA 89FE                    	mov		si,di
-   339 000001AC 81FE0000                	cmp		si,0
-   340 000001B0 7F0E                    	jg		inf_full       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
-   341 000001B2 89D6                    	mov		si,dx		;o jl � importante porque trata-se de conta com sinal
-   342 000001B4 D1E6                    	sal		si,1		;multiplica por doi (shift arithmetic left)
-   343 000001B6 81C60300                	add		si,3
-   344 000001BA 01F7                    	add		di,si     ;nesse ponto d=d+2*dx+3
-   345 000001BC 42                      	inc		dx		;incrementa dx
-   346 000001BD E90E00                  	jmp		plotar_full
-   347                                  inf_full:	
-   348 000001C0 89D6                    	mov		si,dx
-   349 000001C2 29CE                    	sub		si,cx  		;faz x - y (dx-cx), e salva em di 
-   350 000001C4 D1E6                    	sal		si,1
-   351 000001C6 81C60500                	add		si,5
-   352 000001CA 01F7                    	add		di,si		;nesse ponto d=d+2*(dx-cx)+5
-   353 000001CC 42                      	inc		dx		;incrementa x (dx)
-   354 000001CD 49                      	dec		cx		;decrementa y (cx)
-   355                                  	
-   356                                  plotar_full:	
-   357 000001CE 89C6                    	mov		si,ax
-   358 000001D0 01CE                    	add		si,cx
-   359 000001D2 56                      	push	si		;coloca a abcisa y+xc na pilha			
-   360 000001D3 89DE                    	mov		si,bx
-   361 000001D5 29D6                    	sub		si,dx
-   362 000001D7 56                      	push    si		;coloca a ordenada yc-x na pilha
-   363 000001D8 89C6                    	mov		si,ax
-   364 000001DA 01CE                    	add		si,cx
-   365 000001DC 56                      	push	si		;coloca a abcisa y+xc na pilha	
-   366 000001DD 89DE                    	mov		si,bx
-   367 000001DF 01D6                    	add		si,dx
-   368 000001E1 56                      	push    si		;coloca a ordenada yc+x na pilha	
-   369 000001E2 E85700                  	call 	line
-   370                                  	
-   371 000001E5 89C6                    	mov		si,ax
-   372 000001E7 01D6                    	add		si,dx
-   373 000001E9 56                      	push	si		;coloca a abcisa xc+x na pilha			
-   374 000001EA 89DE                    	mov		si,bx
-   375 000001EC 29CE                    	sub		si,cx
-   376 000001EE 56                      	push    si		;coloca a ordenada yc-y na pilha
-   377 000001EF 89C6                    	mov		si,ax
-   378 000001F1 01D6                    	add		si,dx
-   379 000001F3 56                      	push	si		;coloca a abcisa xc+x na pilha	
-   380 000001F4 89DE                    	mov		si,bx
-   381 000001F6 01CE                    	add		si,cx
-   382 000001F8 56                      	push    si		;coloca a ordenada yc+y na pilha	
-   383 000001F9 E84000                  	call	line
-   384                                  	
-   385 000001FC 89C6                    	mov		si,ax
-   386 000001FE 29D6                    	sub		si,dx
-   387 00000200 56                      	push	si		;coloca a abcisa xc-x na pilha			
-   388 00000201 89DE                    	mov		si,bx
-   389 00000203 29CE                    	sub		si,cx
-   390 00000205 56                      	push    si		;coloca a ordenada yc-y na pilha
-   391 00000206 89C6                    	mov		si,ax
-   392 00000208 29D6                    	sub		si,dx
-   393 0000020A 56                      	push	si		;coloca a abcisa xc-x na pilha	
-   394 0000020B 89DE                    	mov		si,bx
-   395 0000020D 01CE                    	add		si,cx
-   396 0000020F 56                      	push    si		;coloca a ordenada yc+y na pilha	
-   397 00000210 E82900                  	call	line
-   398                                  	
-   399 00000213 89C6                    	mov		si,ax
-   400 00000215 29CE                    	sub		si,cx
-   401 00000217 56                      	push	si		;coloca a abcisa xc-y na pilha			
-   402 00000218 89DE                    	mov		si,bx
-   403 0000021A 29D6                    	sub		si,dx
-   404 0000021C 56                      	push    si		;coloca a ordenada yc-x na pilha
-   405 0000021D 89C6                    	mov		si,ax
-   406 0000021F 29CE                    	sub		si,cx
-   407 00000221 56                      	push	si		;coloca a abcisa xc-y na pilha	
-   408 00000222 89DE                    	mov		si,bx
-   409 00000224 01D6                    	add		si,dx
-   410 00000226 56                      	push    si		;coloca a ordenada yc+x na pilha	
-   411 00000227 E81200                  	call	line
+    17                                  %macro ponto 2			; x,y,color
+    18                                  	add %2, 58
+    19                                  	push %1
+    20                                  	push %2	
+    21                                  	call plot_xy
+    22                                  	sub %2, 58
+    23                                  %endmacro
+    24                                  
+    25                                  %macro writeword 3
+    26                                      	mov     bx,0
+    27                                      	mov     dh,%2			;linha 0-29
+    28                                      	mov     dl,%3			;coluna 0-79
+    29                                  %%local:
+    30                                  	call	cursor
+    31                                      	mov     al,[bx+%1]
+    32                                  	cmp	al, '$'
+    33                                  	je	%%exit
+    34                                  	call	caracter
+    35                                      	inc     bx			;proximo caracter
+    36                                  	inc	dl			;avanca a coluna
+    37                                      	jmp	%%local
+    38                                  %%exit:
+    39                                  %endmacro
+    40                                  
+    41                                  segment code
+    42                                  ..start:
+    43 00000000 B8[0000]                    	mov ax,data
+    44 00000003 8ED8                        	mov ds,ax
+    45 00000005 B8[0000]                    	mov ax,stack
+    46 00000008 8ED0                        	mov ss,ax
+    47 0000000A BC[0001]                    	mov sp,stacktop
+    48                                  
+    49                                  	;abre arquivo
+    50 0000000D B43D                    	mov ah, 3Dh
+    51 0000000F B000                    	mov al, 00
+    52 00000011 BA[7700]                	mov dx, filename
+    53 00000014 B90100                  	mov cx, 1
+    54 00000017 CD21                    	int 21h	
+    55                                  
+    56 00000019 A3[8300]                	mov word[handle], ax
+    57 0000001C BE[8604]                	mov si, image
+    58                                  
+    59                                  read:
+    60 0000001F B43F                     	mov ah, 3Fh
+    61 00000021 8B1E[8300]              	mov bx, word[handle]
+    62 00000025 B90100                  	mov cx, 1
+    63 00000028 BA[8500]                	mov dx, input
+    64 0000002B CD21                    	int 21h
+    65                                  
+    66                                  	;verifica se o arquivo acabou	
+    67 0000002D 39C8                    	cmp ax, cx
+    68 0000002F 7C2F                    	jl finishread
+    69                                  	
+    70                                  	;compara com o espaço
+    71 00000031 8A16[8500]              	mov dl, byte[input]
+    72 00000035 80FA20                  	cmp dl, 20h
+    73 00000038 7417                    	je store
+    74                                  
+    75 0000003A 80FA30                  	cmp dl, '0'
+    76 0000003D 7C21                    	jl finishread
+    77                                  
+    78 0000003F A0[8200]                	mov al, byte[buffer]
+    79 00000042 80EA30                  	sub dl, '0'
+    80 00000045 B30A                    	mov bl, 0ah
+    81 00000047 F6E3                    	mul bl
+    82 00000049 00D0                    	add al, dl
+    83 0000004B A2[8200]                	mov byte[buffer], al
+    84 0000004E E9CEFF                  	jmp read
+    85                                  	
+    86                                  store:
+    87 00000051 8A16[8200]              	mov dl, byte[buffer]
+    88 00000055 8814                    	mov byte[si], dl
+    89 00000057 46                      	inc si
+    90 00000058 C606[8200]00            	mov byte[buffer], 00h
+    91 0000005D E9BFFF                  	jmp read
+    92                                  
+    93                                  finishread:
+    94                                  	; termina a leitura da imagem
+    95 00000060 8A16[8200]              	mov dl, [buffer]	
+    96 00000064 8814                    	mov byte[si], dl
+    97 00000066 46                      	inc si
+    98 00000067 C60424                  	mov byte[si], '$'
+    99 0000006A E90000                  	jmp print
+   100                                  
+   101                                  print:	
+   102                                  	;imprime a imagem na tela
+   103 0000006D BA[8604]                	mov dx, image
+   104 00000070 B409                    	mov ah, 09h
+   105 00000072 CD21                    	int 21h
+   106                                  
+   107                                  ; salvar modo corrente de video(vendo como est� o modo de video da maquina)
+   108 00000074 B40F                            mov 	ah,0Fh
+   109 00000076 CD10                        	int 	10h
+   110 00000078 A2[0100]                    	mov 	[modo_anterior],al   
+   111                                  
+   112                                  ; alterar modo de video para gr�fico 640x480 16 cores
+   113 0000007B B012                        	mov    	al,12h
+   114 0000007D B400                       	mov    	ah,0
+   115 0000007F CD10                        	int    	10h
+   116                                  	
+   117                                  ;escrever uma mensagem
+   118                                  
+   119                                  ;	drawline 255, 0, 255, 479, branco_intenso
+   120                                  ;	drawline 255, 239, 639, 239, branco_intenso
+   121                                  ;	drawline 63, 479, 63, 431, branco_intenso
+   122                                  ;	drawline 127, 479, 127, 431, branco_intenso
+   123                                  ;	drawline 191, 479, 191, 431, branco_intenso
+   124                                  ;	drawline 0, 431, 255, 431, branco_intenso
+   125                                  ;	drawline 0, 63, 255, 63, branco_intenso
+   126                                  
+   127                                  ;	writeword abrir, 1, 1
+   128                                  ;	writeword sair, 1, 10
+   129                                  ;	writeword hist, 1, 18
+   130                                  ;	writeword eqhist, 1, 25
+   131                                  ;	writeword txhist, 1, 33
+   132                                  ;	writeword txeqhist, 16, 33
+   133                                  ;	writeword nome, 27, 1
+   134                                  ;	writeword disc, 28, 1
+   135                                  
+   136 00000081 B80000                  	mov ax, 0  	; x
+   137 00000084 B9FF00                  	mov cx, 255	; y
+   138 00000087 BB[8604]                	mov bx, image
+   139 0000008A CD03                    	int 3	
+   140                                  
+   141 0000008C 81F90000                L3:	cmp cx, 0
+   142 00000090 7429                    	je FL3
+   143 00000092 8A07                    	mov al, byte[bx]
+   144 00000094 C0E804                  	shr al, 4
+   145 00000097 A2[0000]                	mov byte[cor], al	
+   146                                  	ponto ax, cx
+   147 0000009A 81C13A00            <1> 	add %2, 58
+   148 0000009E 50                  <1> 	push %1
+   149 0000009F 51                  <1> 	push %2
+   150 000000A0 E85C00              <1> 	call plot_xy
+   151 000000A3 81E93A00            <1> 	sub %2, 58
+   152 000000A7 40                      	inc ax
+   153 000000A8 43                      	inc bx	
+   154 000000A9 3D0001                  	cmp ax, 256
+   155 000000AC 7403                    	je RCAX
+   156 000000AE E9DBFF                  	jmp L3
+   157                                  RCAX:	 
+   158 000000B1 B80000                  	mov ax, 0
+   159 000000B4 81E90100                	sub cx, 1
+   160 000000B8 E9D1FF                  	jmp L3
+   161                                  FL3:	
+   162                                  
+   163 000000BB B408                    	mov ah,08h
+   164 000000BD CD21                    	int 21h
+   165 000000BF B400                    	mov ah,0   			; set video mode
+   166 000000C1 A0[0100]                	mov al,[modo_anterior]   	; modo anterior
+   167 000000C4 CD10                    	int 10h
+   168                                  
+   169 000000C6 B44C                    	mov ah, 4Ch
+   170 000000C8 CD21                    	int 21h
+   171                                  ;***************************************************************************
+   172                                  ; função cursor
+   173                                  ; dh = linha (0-29) e  dl=coluna  (0-79)
+   174                                  ;***************************************************************************
+   175                                  cursor:
+   176 000000CA 9C                      	pushf
+   177 000000CB 50                      	push 	ax
+   178 000000CC 53                      	push 	bx
+   179 000000CD 51                      	push	cx
+   180 000000CE 52                      	push	dx
+   181 000000CF 56                      	push	si
+   182 000000D0 57                      	push	di
+   183 000000D1 55                      	push	bp
+   184 000000D2 B402                    	mov    	ah,2
+   185 000000D4 B700                    	mov    	bh,0
+   186 000000D6 CD10                    	int    	10h
+   187 000000D8 5D                      	pop	bp
+   188 000000D9 5F                      	pop	di
+   189 000000DA 5E                      	pop	si
+   190 000000DB 5A                      	pop	dx
+   191 000000DC 59                      	pop	cx
+   192 000000DD 5B                      	pop	bx
+   193 000000DE 58                      	pop	ax
+   194 000000DF 9D                      	popf
+   195 000000E0 C3                      	ret
+   196                                  ;_____________________________________________________________________________
+   197                                  ;
+   198                                  ;   fun��o caracter escrito na posi��o do cursor
+   199                                  ;
+   200                                  ; al= caracter a ser escrito
+   201                                  ; cor definida na variavel cor
+   202                                  caracter:
+   203 000000E1 9C                      	pushf
+   204 000000E2 50                      	push	ax
+   205 000000E3 53                      	push	bx
+   206 000000E4 51                      	push	cx
+   207 000000E5 52                      	push	dx
+   208 000000E6 56                      	push	si
+   209 000000E7 57                      	push	di
+   210 000000E8 55                      	push	bp
+   211 000000E9 B409                        	mov    	ah,9
+   212 000000EB B700                        	mov    	bh,0
+   213 000000ED B90100                      	mov    	cx,1
+   214 000000F0 8A1E[0000]                 	mov    	bl,[cor]
+   215 000000F4 CD10                        	int    	10h
+   216 000000F6 5D                      	pop	bp
+   217 000000F7 5F                      	pop	di
+   218 000000F8 5E                      	pop	si
+   219 000000F9 5A                      	pop	dx
+   220 000000FA 59                      	pop	cx
+   221 000000FB 5B                      	pop	bx
+   222 000000FC 58                      	pop	ax
+   223 000000FD 9D                      	popf
+   224 000000FE C3                      	ret
+   225                                  ;_____________________________________________________________________________
+   226                                  ;
+   227                                  ;   função plot_xy
+   228                                  ;
+   229                                  ; push x; push y; call plot_xy;  (x<639, y<479)
+   230                                  ; cor definida na variavel cor
+   231                                  plot_xy:
+   232 000000FF 55                      	push	bp
+   233 00000100 89E5                    	mov	bp,sp
+   234 00000102 9C                      	pushf
+   235 00000103 50                      	push 	ax
+   236 00000104 53                      	push 	bx
+   237 00000105 51                      	push	cx
+   238 00000106 52                      	push	dx
+   239 00000107 56                      	push	si
+   240 00000108 57                      	push	di
+   241 00000109 B40C                    	mov    	ah,0ch
+   242 0000010B A0[0000]                	mov    	al,[cor]
+   243 0000010E B700                    	mov    	bh,0
+   244 00000110 BADF01                  	mov    	dx,479
+   245 00000113 2B5604                  	sub	dx,[bp+4]
+   246 00000116 8B4E06                  	mov    	cx,[bp+6]
+   247 00000119 CD10                    	int    	10h
+   248 0000011B 5F                      	pop	di
+   249 0000011C 5E                      	pop	si
+   250 0000011D 5A                      	pop	dx
+   251 0000011E 59                      	pop	cx
+   252 0000011F 5B                      	pop	bx
+   253 00000120 58                      	pop	ax
+   254 00000121 9D                      	popf
+   255 00000122 5D                      	pop	bp
+   256 00000123 C20400                  	ret	4
+   257                                  ;_____________________________________________________________________________
+   258                                  ;    fun��o circle
+   259                                  ;	 push xc; push yc; push r; call circle;  (xc+r<639,yc+r<479)e(xc-r>0,yc-r>0)
+   260                                  ; cor definida na variavel cor
+   261                                  circle:
+   262 00000126 55                      	push 	bp
+   263 00000127 89E5                    	mov	bp,sp
+   264 00000129 9C                      	pushf                        ;coloca os flags na pilha
+   265 0000012A 50                      	push 	ax
+   266 0000012B 53                      	push 	bx
+   267 0000012C 51                      	push	cx
+   268 0000012D 52                      	push	dx
+   269 0000012E 56                      	push	si
+   270 0000012F 57                      	push	di
+   271 00000130 8B4608                  	mov	ax,[bp+8]    ; resgata xc
+   272 00000133 8B5E06                  	mov	bx,[bp+6]    ; resgata yc
+   273 00000136 8B4E04                  	mov	cx,[bp+4]    ; resgata r
+   274 00000139 89DA                    	mov 	dx,bx	
+   275 0000013B 01CA                    	add	dx,cx       ;ponto extremo superior
+   276 0000013D 50                      	push    ax			
+   277 0000013E 52                      	push	dx
+   278 0000013F E8BDFF                  	call	plot_xy
+   279 00000142 89DA                    	mov	dx,bx
+   280 00000144 29CA                    	sub	dx,cx       ;ponto extremo inferior
+   281 00000146 50                      	push    ax			
+   282 00000147 52                      	push	dx
+   283 00000148 E8B4FF                  	call 	plot_xy
+   284 0000014B 89C2                    	mov 	dx,ax	
+   285 0000014D 01CA                    	add	dx,cx       ;ponto extremo direita
+   286 0000014F 52                      	push    dx			
+   287 00000150 53                      	push	bx
+   288 00000151 E8ABFF                  	call	plot_xy
+   289 00000154 89C2                    	mov	dx,ax
+   290 00000156 29CA                    	sub	dx,cx       ;ponto extremo esquerda
+   291 00000158 52                      	push    dx			
+   292 00000159 53                      	push	bx
+   293 0000015A E8A2FF                  	call	plot_xy
+   294 0000015D 89CF                    	mov	di,cx
+   295 0000015F 81EF0100                	sub	di,1	 ;di=r-1
+   296 00000163 BA0000                  	mov	dx,0  	;dx ser� a vari�vel x. cx � a variavel y
+   297                                  	
+   298                                  ;aqui em cima a l�gica foi invertida, 1-r => r-1
+   299                                  ;e as compara��es passaram a ser jl => jg, assim garante 
+   300                                  ;valores positivos para d
+   301                                  
+   302                                  stay:				;loop
+   303 00000166 89FE                    	mov	si,di
+   304 00000168 81FE0000                	cmp	si,0
+   305 0000016C 7F0E                    	jg	inf       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
+   306 0000016E 89D6                    	mov	si,dx		;o jl � importante porque trata-se de conta com sinal
+   307 00000170 D1E6                    	sal	si,1		;multiplica por doi (shift arithmetic left)
+   308 00000172 81C60300                	add	si,3
+   309 00000176 01F7                    	add	di,si     ;nesse ponto d=d+2*dx+3
+   310 00000178 42                      	inc	dx		;incrementa dx
+   311 00000179 E90E00                  	jmp	plotar
+   312                                  inf:	
+   313 0000017C 89D6                    	mov	si,dx
+   314 0000017E 29CE                    	sub	si,cx  		;faz x - y (dx-cx), e salva em di 
+   315 00000180 D1E6                    	sal	si,1
+   316 00000182 81C60500                	add	si,5
+   317 00000186 01F7                    	add	di,si		;nesse ponto d=d+2*(dx-cx)+5
+   318 00000188 42                      	inc	dx		;incrementa x (dx)
+   319 00000189 49                      	dec	cx		;decrementa y (cx)
+   320                                  	
+   321                                  plotar:	
+   322 0000018A 89D6                    	mov	si,dx
+   323 0000018C 01C6                    	add	si,ax
+   324 0000018E 56                      	push    si			;coloca a abcisa x+xc na pilha
+   325 0000018F 89CE                    	mov	si,cx
+   326 00000191 01DE                    	add	si,bx
+   327 00000193 56                      	push    si			;coloca a ordenada y+yc na pilha
+   328 00000194 E868FF                  	call plot_xy		;toma conta do segundo octante
+   329 00000197 89C6                    	mov	si,ax
+   330 00000199 01D6                    	add	si,dx
+   331 0000019B 56                      	push    si			;coloca a abcisa xc+x na pilha
+   332 0000019C 89DE                    	mov	si,bx
+   333 0000019E 29CE                    	sub	si,cx
+   334 000001A0 56                      	push    si			;coloca a ordenada yc-y na pilha
+   335 000001A1 E85BFF                  	call plot_xy		;toma conta do s�timo octante
+   336 000001A4 89C6                    	mov	si,ax
+   337 000001A6 01CE                    	add	si,cx
+   338 000001A8 56                      	push    si			;coloca a abcisa xc+y na pilha
+   339 000001A9 89DE                    	mov	si,bx
+   340 000001AB 01D6                    	add	si,dx
+   341 000001AD 56                      	push    si			;coloca a ordenada yc+x na pilha
+   342 000001AE E84EFF                  	call plot_xy		;toma conta do segundo octante
+   343 000001B1 89C6                    	mov	si,ax
+   344 000001B3 01CE                    	add	si,cx
+   345 000001B5 56                      	push    si			;coloca a abcisa xc+y na pilha
+   346 000001B6 89DE                    	mov	si,bx
+   347 000001B8 29D6                    	sub	si,dx
+   348 000001BA 56                      	push    si			;coloca a ordenada yc-x na pilha
+   349 000001BB E841FF                  	call plot_xy		;toma conta do oitavo octante
+   350 000001BE 89C6                    	mov	si,ax
+   351 000001C0 29D6                    	sub	si,dx
+   352 000001C2 56                      	push    si			;coloca a abcisa xc-x na pilha
+   353 000001C3 89DE                    	mov	si,bx
+   354 000001C5 01CE                    	add	si,cx
+   355 000001C7 56                      	push    si			;coloca a ordenada yc+y na pilha
+   356 000001C8 E834FF                  	call plot_xy		;toma conta do terceiro octante
+   357 000001CB 89C6                    	mov	si,ax
+   358 000001CD 29D6                    	sub	si,dx
+   359 000001CF 56                      	push    si			;coloca a abcisa xc-x na pilha
+   360 000001D0 89DE                    	mov	si,bx
+   361 000001D2 29CE                    	sub	si,cx
+   362 000001D4 56                      	push    si			;coloca a ordenada yc-y na pilha
+   363 000001D5 E827FF                  	call plot_xy		;toma conta do sexto octante
+   364 000001D8 89C6                    	mov	si,ax
+   365 000001DA 29CE                    	sub	si,cx
+   366 000001DC 56                      	push    si			;coloca a abcisa xc-y na pilha
+   367 000001DD 89DE                    	mov	si,bx
+   368 000001DF 29D6                    	sub	si,dx
+   369 000001E1 56                      	push    si			;coloca a ordenada yc-x na pilha
+   370 000001E2 E81AFF                  	call plot_xy		;toma conta do quinto octante
+   371 000001E5 89C6                    	mov	si,ax
+   372 000001E7 29CE                    	sub	si,cx
+   373 000001E9 56                      	push    si			;coloca a abcisa xc-y na pilha
+   374 000001EA 89DE                    	mov	si,bx
+   375 000001EC 01D6                    	add	si,dx
+   376 000001EE 56                      	push    si			;coloca a ordenada yc-x na pilha
+   377 000001EF E80DFF                  	call plot_xy		;toma conta do quarto octante
+   378                                  	
+   379 000001F2 39D1                    	cmp	cx,dx
+   380 000001F4 7203                    	jb	fim_circle  ;se cx (y) est� abaixo de dx (x), termina     
+   381 000001F6 E96DFF                  	jmp	stay		;se cx (y) est� acima de dx (x), continua no loop
+   382                                  	
+   383                                  	
+   384                                  fim_circle:
+   385 000001F9 5F                      	pop	di
+   386 000001FA 5E                      	pop	si
+   387 000001FB 5A                      	pop	dx
+   388 000001FC 59                      	pop	cx
+   389 000001FD 5B                      	pop	bx
+   390 000001FE 58                      	pop 	ax
+   391 000001FF 9D                      	popf
+   392 00000200 5D                      	pop	bp
+   393 00000201 C20600                  	ret	6
+   394                                  ;-----------------------------------------------------------------------------
+   395                                  ;    fun��o full_circle
+   396                                  ;	 push xc; push yc; push r; call full_circle;  (xc+r<639,yc+r<479)e(xc-r>0,yc-r>0)
+   397                                  ; cor definida na variavel cor					  
+   398                                  full_circle:
+   399 00000204 55                      	push 	bp
+   400 00000205 89E5                    	mov	 	bp,sp
+   401 00000207 9C                      	pushf                        ;coloca os flags na pilha
+   402 00000208 50                      	push 	ax
+   403 00000209 53                      	push 	bx
+   404 0000020A 51                      	push	cx
+   405 0000020B 52                      	push	dx
+   406 0000020C 56                      	push	si
+   407 0000020D 57                      	push	di
+   408                                  
+   409 0000020E 8B4608                  	mov		ax,[bp+8]    ; resgata xc
+   410 00000211 8B5E06                  	mov		bx,[bp+6]    ; resgata yc
+   411 00000214 8B4E04                  	mov		cx,[bp+4]    ; resgata r
    412                                  	
-   413 0000022A 39D1                    	cmp		cx,dx
-   414 0000022C 7203                    	jb		fim_full_circle  ;se cx (y) est� abaixo de dx (x), termina     
-   415 0000022E E979FF                  	jmp		stay_full		;se cx (y) est� acima de dx (x), continua no loop
-   416                                  	
-   417                                  	
-   418                                  fim_full_circle:
-   419 00000231 5F                      	pop		di
-   420 00000232 5E                      	pop		si
-   421 00000233 5A                      	pop		dx
-   422 00000234 59                      	pop		cx
-   423 00000235 5B                      	pop		bx
-   424 00000236 58                      	pop		ax
-   425 00000237 9D                      	popf
-   426 00000238 5D                      	pop		bp
-   427 00000239 C20600                  	ret		6
-   428                                  ;-----------------------------------------------------------------------------
-   429                                  ;
-   430                                  ;   fun��o line
-   431                                  ;
-   432                                  ; push x1; push y1; push x2; push y2; call line;  (x<639, y<479)
-   433                                  line:
-   434 0000023C 55                      	push		bp
-   435 0000023D 89E5                    	mov		bp,sp
-   436 0000023F 9C                      	pushf                        ;coloca os flags na pilha
-   437 00000240 50                      	push 		ax
-   438 00000241 53                      	push 		bx
-   439 00000242 51                      	push		cx
-   440 00000243 52                      	push		dx
-   441 00000244 56                      	push		si
-   442 00000245 57                      	push		di
-   443 00000246 8B460A                  	mov		ax,[bp+10]   ; resgata os valores das coordenadas
-   444 00000249 8B5E08                  	mov		bx,[bp+8]    ; resgata os valores das coordenadas
-   445 0000024C 8B4E06                  	mov		cx,[bp+6]    ; resgata os valores das coordenadas
-   446 0000024F 8B5604                  	mov		dx,[bp+4]    ; resgata os valores das coordenadas
-   447 00000252 39C8                    	cmp		ax,cx
-   448 00000254 7408                    	je		line2
-   449 00000256 721C                    	jb		line1
-   450 00000258 91                      	xchg		ax,cx
-   451 00000259 87DA                    	xchg		bx,dx
-   452 0000025B E91600                  	jmp		line1
-   453                                  line2:		; deltax=0
-   454 0000025E 39D3                    	cmp		bx,dx  ;subtrai dx de bx
-   455 00000260 7202                    	jb		line3
-   456 00000262 87DA                    	xchg		bx,dx        ;troca os valores de bx e dx entre eles
-   457                                  line3:	; dx > bx
-   458 00000264 50                      	push		ax
-   459 00000265 53                      	push		bx
-   460 00000266 E811FE                  	call 		plot_xy
-   461 00000269 39D3                    	cmp		bx,dx
-   462 0000026B 7503                    	jne		line31
-   463 0000026D E9C600                  	jmp		fim_line
-   464 00000270 43                      line31:	inc		bx
-   465 00000271 E9F0FF                  	jmp		line3
-   466                                  ;deltax <>0
-   467                                  line1:
-   468                                  ; comparar m�dulos de deltax e deltay sabendo que cx>ax
-   469                                  	; cx > ax
-   470 00000274 51                      		push		cx
-   471 00000275 29C1                    		sub		cx,ax
-   472 00000277 890E[0600]              		mov		[deltax],cx
-   473 0000027B 59                      		pop		cx
-   474 0000027C 52                      		push		dx
-   475 0000027D 29DA                    		sub		dx,bx
-   476 0000027F 7702                    		ja		line32
-   477 00000281 F7DA                    		neg		dx
-   478                                  line32:		
-   479 00000283 8916[0800]              		mov		[deltay],dx
-   480 00000287 5A                      		pop		dx
-   481                                  
-   482 00000288 50                      		push		ax
-   483 00000289 A1[0600]                		mov		ax,[deltax]
-   484 0000028C 3B06[0800]              		cmp		ax,[deltay]
-   485 00000290 58                      		pop		ax
-   486 00000291 724D                    		jb		line5
-   487                                  
-   488                                  	; cx > ax e deltax>deltay
-   489 00000293 51                      		push		cx
-   490 00000294 29C1                    		sub		cx,ax
-   491 00000296 890E[0600]              		mov		[deltax],cx
-   492 0000029A 59                      		pop		cx
-   493 0000029B 52                      		push		dx
-   494 0000029C 29DA                    		sub		dx,bx
-   495 0000029E 8916[0800]              		mov		[deltay],dx
-   496 000002A2 5A                      		pop		dx
-   497                                  
-   498 000002A3 89C6                    		mov		si,ax
-   499                                  line4:
-   500 000002A5 50                      		push		ax
-   501 000002A6 52                      		push		dx
-   502 000002A7 56                      		push		si
-   503 000002A8 29C6                    		sub		si,ax	;(x-x1)
-   504 000002AA A1[0800]                		mov		ax,[deltay]
-   505 000002AD F7EE                    		imul		si
-   506 000002AF 8B36[0600]              		mov		si,[deltax]		;arredondar
-   507 000002B3 D1EE                    		shr		si,1
-   508                                  ; se numerador (DX)>0 soma se <0 subtrai
-   509 000002B5 81FA0000                		cmp		dx,0
-   510 000002B9 7C09                    		jl		ar1
-   511 000002BB 01F0                    		add		ax,si
-   512 000002BD 81D20000                		adc		dx,0
-   513 000002C1 E90600                  		jmp		arc1
-   514 000002C4 29F0                    ar1:		sub		ax,si
-   515 000002C6 81DA0000                		sbb		dx,0
-   516                                  arc1:
-   517 000002CA F73E[0600]              		idiv		word [deltax]
-   518 000002CE 01D8                    		add		ax,bx
-   519 000002D0 5E                      		pop		si
-   520 000002D1 56                      		push		si
-   521 000002D2 50                      		push		ax
-   522 000002D3 E8A4FD                  		call		plot_xy
-   523 000002D6 5A                      		pop		dx
-   524 000002D7 58                      		pop		ax
-   525 000002D8 39CE                    		cmp		si,cx
-   526 000002DA 745A                    		je		fim_line
-   527 000002DC 46                      		inc		si
-   528 000002DD E9C5FF                  		jmp		line4
-   529                                  
-   530 000002E0 39D3                    line5:		cmp		bx,dx
-   531 000002E2 7203                    		jb 		line7
-   532 000002E4 91                      		xchg		ax,cx
-   533 000002E5 87DA                    		xchg		bx,dx
-   534                                  line7:
-   535 000002E7 51                      		push		cx
-   536 000002E8 29C1                    		sub		cx,ax
-   537 000002EA 890E[0600]              		mov		[deltax],cx
-   538 000002EE 59                      		pop		cx
-   539 000002EF 52                      		push		dx
-   540 000002F0 29DA                    		sub		dx,bx
-   541 000002F2 8916[0800]              		mov		[deltay],dx
-   542 000002F6 5A                      		pop		dx
-   543                                  
-   544                                  
-   545                                  
-   546 000002F7 89DE                    		mov		si,bx
-   547                                  line6:
-   548 000002F9 52                      		push		dx
-   549 000002FA 56                      		push		si
-   550 000002FB 50                      		push		ax
-   551 000002FC 29DE                    		sub		si,bx	;(y-y1)
-   552 000002FE A1[0600]                		mov		ax,[deltax]
-   553 00000301 F7EE                    		imul		si
-   554 00000303 8B36[0800]              		mov		si,[deltay]		;arredondar
-   555 00000307 D1EE                    		shr		si,1
-   556                                  ; se numerador (DX)>0 soma se <0 subtrai
-   557 00000309 81FA0000                		cmp		dx,0
-   558 0000030D 7C09                    		jl		ar2
-   559 0000030F 01F0                    		add		ax,si
-   560 00000311 81D20000                		adc		dx,0
-   561 00000315 E90600                  		jmp		arc2
-   562 00000318 29F0                    ar2:		sub		ax,si
-   563 0000031A 81DA0000                		sbb		dx,0
-   564                                  arc2:
-   565 0000031E F73E[0800]              		idiv		word [deltay]
-   566 00000322 89C7                    		mov		di,ax
-   567 00000324 58                      		pop		ax
-   568 00000325 01C7                    		add		di,ax
-   569 00000327 5E                      		pop		si
-   570 00000328 57                      		push		di
-   571 00000329 56                      		push		si
-   572 0000032A E84DFD                  		call		plot_xy
-   573 0000032D 5A                      		pop		dx
-   574 0000032E 39D6                    		cmp		si,dx
-   575 00000330 7404                    		je		fim_line
-   576 00000332 46                      		inc		si
-   577 00000333 E9C3FF                  		jmp		line6
-   578                                  
-   579                                  fim_line:
-   580 00000336 5F                      		pop		di
-   581 00000337 5E                      		pop		si
-   582 00000338 5A                      		pop		dx
-   583 00000339 59                      		pop		cx
-   584 0000033A 5B                      		pop		bx
-   585 0000033B 58                      		pop		ax
-   586 0000033C 9D                      		popf
-   587 0000033D 5D                      		pop		bp
-   588 0000033E C20800                  		ret		8
-   589                                  ;*******************************************************************
-   590                                  segment data
-   591                                  
-   592 00000000 0F                      cor		db		branco_intenso
-   593                                  
-   594                                  ;	I R G B COR
-   595                                  ;	0 0 0 0 preto
-   596                                  ;	0 0 0 1 azul
-   597                                  ;	0 0 1 0 verde
-   598                                  ;	0 0 1 1 cyan
-   599                                  ;	0 1 0 0 vermelho
-   600                                  ;	0 1 0 1 magenta
-   601                                  ;	0 1 1 0 marrom
-   602                                  ;	0 1 1 1 branco
-   603                                  ;	1 0 0 0 cinza
-   604                                  ;	1 0 0 1 azul claro
-   605                                  ;	1 0 1 0 verde claro
-   606                                  ;	1 0 1 1 cyan claro
-   607                                  ;	1 1 0 0 rosa
-   608                                  ;	1 1 0 1 magenta claro
-   609                                  ;	1 1 1 0 amarelo
-   610                                  ;	1 1 1 1 branco intenso
-   611                                  
-   612                                  preto		equ		0
-   613                                  azul		equ		1
-   614                                  verde		equ		2
-   615                                  cyan		equ		3
-   616                                  vermelho	equ		4
-   617                                  magenta		equ		5
-   618                                  marrom		equ		6
-   619                                  branco		equ		7
-   620                                  cinza		equ		8
-   621                                  azul_claro	equ		9
-   622                                  verde_claro	equ		10
-   623                                  cyan_claro	equ		11
-   624                                  rosa		equ		12
-   625                                  magenta_claro	equ		13
-   626                                  amarelo		equ		14
-   627                                  branco_intenso	equ		15
-   628                                  
-   629 00000001 00                      modo_anterior	db		0
-   630 00000002 0000                    linha   	dw  		0
-   631 00000004 0000                    coluna  	dw  		0
-   632 00000006 0000                    deltax		dw		0
-   633 00000008 0000                    deltay		dw		0	
-   634 0000000A 46756E63616F204772-     mens    	db  		'Funcao Grafica$'
-   635 00000013 616669636124       
-   636                                  ;*************************************************************************
-   637                                  segment stack stack
-   638 00000000 <res 00000200>             		resb 		512
-   639                                  stacktop:
-   640                                  
-   641                                  
+   413 00000217 89DE                    	mov		si,bx
+   414 00000219 29CE                    	sub		si,cx
+   415 0000021B 50                      	push    ax			;coloca xc na pilha			
+   416 0000021C 56                      	push	si			;coloca yc-r na pilha
+   417 0000021D 89DE                    	mov		si,bx
+   418 0000021F 01CE                    	add		si,cx
+   419 00000221 50                      	push	ax		;coloca xc na pilha
+   420 00000222 56                      	push	si		;coloca yc+r na pilha
+   421 00000223 E89B00                  	call line
+   422                                  	
+   423                                  		
+   424 00000226 89CF                    	mov		di,cx
+   425 00000228 81EF0100                	sub		di,1	 ;di=r-1
+   426 0000022C BA0000                  	mov		dx,0  	;dx ser� a vari�vel x. cx � a variavel y
+   427                                  	
+   428                                  ;aqui em cima a l�gica foi invertida, 1-r => r-1
+   429                                  ;e as compara��es passaram a ser jl => jg, assim garante 
+   430                                  ;valores positivos para d
+   431                                  
+   432                                  stay_full:				;loop
+   433 0000022F 89FE                    	mov		si,di
+   434 00000231 81FE0000                	cmp		si,0
+   435 00000235 7F0E                    	jg		inf_full       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
+   436 00000237 89D6                    	mov		si,dx		;o jl � importante porque trata-se de conta com sinal
+   437 00000239 D1E6                    	sal		si,1		;multiplica por doi (shift arithmetic left)
+   438 0000023B 81C60300                	add		si,3
+   439 0000023F 01F7                    	add		di,si     ;nesse ponto d=d+2*dx+3
+   440 00000241 42                      	inc		dx		;incrementa dx
+   441 00000242 E90E00                  	jmp		plotar_full
+   442                                  inf_full:	
+   443 00000245 89D6                    	mov		si,dx
+   444 00000247 29CE                    	sub		si,cx  		;faz x - y (dx-cx), e salva em di 
+   445 00000249 D1E6                    	sal		si,1
+   446 0000024B 81C60500                	add		si,5
+   447 0000024F 01F7                    	add		di,si		;nesse ponto d=d+2*(dx-cx)+5
+   448 00000251 42                      	inc		dx		;incrementa x (dx)
+   449 00000252 49                      	dec		cx		;decrementa y (cx)
+   450                                  	
+   451                                  plotar_full:	
+   452 00000253 89C6                    	mov		si,ax
+   453 00000255 01CE                    	add		si,cx
+   454 00000257 56                      	push	si		;coloca a abcisa y+xc na pilha			
+   455 00000258 89DE                    	mov		si,bx
+   456 0000025A 29D6                    	sub		si,dx
+   457 0000025C 56                      	push    si		;coloca a ordenada yc-x na pilha
+   458 0000025D 89C6                    	mov		si,ax
+   459 0000025F 01CE                    	add		si,cx
+   460 00000261 56                      	push	si		;coloca a abcisa y+xc na pilha	
+   461 00000262 89DE                    	mov		si,bx
+   462 00000264 01D6                    	add		si,dx
+   463 00000266 56                      	push    si		;coloca a ordenada yc+x na pilha	
+   464 00000267 E85700                  	call 	line
+   465                                  	
+   466 0000026A 89C6                    	mov		si,ax
+   467 0000026C 01D6                    	add		si,dx
+   468 0000026E 56                      	push	si		;coloca a abcisa xc+x na pilha			
+   469 0000026F 89DE                    	mov		si,bx
+   470 00000271 29CE                    	sub		si,cx
+   471 00000273 56                      	push    si		;coloca a ordenada yc-y na pilha
+   472 00000274 89C6                    	mov		si,ax
+   473 00000276 01D6                    	add		si,dx
+   474 00000278 56                      	push	si		;coloca a abcisa xc+x na pilha	
+   475 00000279 89DE                    	mov		si,bx
+   476 0000027B 01CE                    	add		si,cx
+   477 0000027D 56                      	push    si		;coloca a ordenada yc+y na pilha	
+   478 0000027E E84000                  	call	line
+   479                                  	
+   480 00000281 89C6                    	mov		si,ax
+   481 00000283 29D6                    	sub		si,dx
+   482 00000285 56                      	push	si		;coloca a abcisa xc-x na pilha			
+   483 00000286 89DE                    	mov		si,bx
+   484 00000288 29CE                    	sub		si,cx
+   485 0000028A 56                      	push    si		;coloca a ordenada yc-y na pilha
+   486 0000028B 89C6                    	mov		si,ax
+   487 0000028D 29D6                    	sub		si,dx
+   488 0000028F 56                      	push	si		;coloca a abcisa xc-x na pilha	
+   489 00000290 89DE                    	mov		si,bx
+   490 00000292 01CE                    	add		si,cx
+   491 00000294 56                      	push    si		;coloca a ordenada yc+y na pilha	
+   492 00000295 E82900                  	call	line
+   493                                  	
+   494 00000298 89C6                    	mov		si,ax
+   495 0000029A 29CE                    	sub		si,cx
+   496 0000029C 56                      	push	si		;coloca a abcisa xc-y na pilha			
+   497 0000029D 89DE                    	mov		si,bx
+   498 0000029F 29D6                    	sub		si,dx
+   499 000002A1 56                      	push    si		;coloca a ordenada yc-x na pilha
+   500 000002A2 89C6                    	mov		si,ax
+   501 000002A4 29CE                    	sub		si,cx
+   502 000002A6 56                      	push	si		;coloca a abcisa xc-y na pilha	
+   503 000002A7 89DE                    	mov		si,bx
+   504 000002A9 01D6                    	add		si,dx
+   505 000002AB 56                      	push    si		;coloca a ordenada yc+x na pilha	
+   506 000002AC E81200                  	call	line
+   507                                  	
+   508 000002AF 39D1                    	cmp		cx,dx
+   509 000002B1 7203                    	jb		fim_full_circle  ;se cx (y) est� abaixo de dx (x), termina     
+   510 000002B3 E979FF                  	jmp		stay_full		;se cx (y) est� acima de dx (x), continua no loop
+   511                                  	
+   512                                  	
+   513                                  fim_full_circle:
+   514 000002B6 5F                      	pop		di
+   515 000002B7 5E                      	pop		si
+   516 000002B8 5A                      	pop		dx
+   517 000002B9 59                      	pop		cx
+   518 000002BA 5B                      	pop		bx
+   519 000002BB 58                      	pop		ax
+   520 000002BC 9D                      	popf
+   521 000002BD 5D                      	pop		bp
+   522 000002BE C20600                  	ret		6
+   523                                  ;-----------------------------------------------------------------------------
+   524                                  ;
+   525                                  ;   fun��o line
+   526                                  ;
+   527                                  ; push x1; push y1; push x2; push y2; call line;  (x<639, y<479)
+   528                                  line:
+   529 000002C1 55                      	push		bp
+   530 000002C2 89E5                    	mov		bp,sp
+   531 000002C4 9C                      	pushf                        ;coloca os flags na pilha
+   532 000002C5 50                      	push 		ax
+   533 000002C6 53                      	push 		bx
+   534 000002C7 51                      	push		cx
+   535 000002C8 52                      	push		dx
+   536 000002C9 56                      	push		si
+   537 000002CA 57                      	push		di
+   538 000002CB 8B460A                  	mov		ax,[bp+10]   ; resgata os valores das coordenadas
+   539 000002CE 8B5E08                  	mov		bx,[bp+8]    ; resgata os valores das coordenadas
+   540 000002D1 8B4E06                  	mov		cx,[bp+6]    ; resgata os valores das coordenadas
+   541 000002D4 8B5604                  	mov		dx,[bp+4]    ; resgata os valores das coordenadas
+   542 000002D7 39C8                    	cmp		ax,cx
+   543 000002D9 7408                    	je		line2
+   544 000002DB 721C                    	jb		line1
+   545 000002DD 91                      	xchg		ax,cx
+   546 000002DE 87DA                    	xchg		bx,dx
+   547 000002E0 E91600                  	jmp		line1
+   548                                  line2:		; deltax=0
+   549 000002E3 39D3                    	cmp		bx,dx  ;subtrai dx de bx
+   550 000002E5 7202                    	jb		line3
+   551 000002E7 87DA                    	xchg		bx,dx        ;troca os valores de bx e dx entre eles
+   552                                  line3:	; dx > bx
+   553 000002E9 50                      	push		ax
+   554 000002EA 53                      	push		bx
+   555 000002EB E811FE                  	call 		plot_xy
+   556 000002EE 39D3                    	cmp		bx,dx
+   557 000002F0 7503                    	jne		line31
+   558 000002F2 E9C600                  	jmp		fim_line
+   559 000002F5 43                      line31:	inc		bx
+   560 000002F6 E9F0FF                  	jmp		line3
+   561                                  ;deltax <>0
+   562                                  line1:
+   563                                  ; comparar m�dulos de deltax e deltay sabendo que cx>ax
+   564                                  	; cx > ax
+   565 000002F9 51                      		push		cx
+   566 000002FA 29C1                    		sub		cx,ax
+   567 000002FC 890E[0600]              		mov		[deltax],cx
+   568 00000300 59                      		pop		cx
+   569 00000301 52                      		push		dx
+   570 00000302 29DA                    		sub		dx,bx
+   571 00000304 7702                    		ja		line32
+   572 00000306 F7DA                    		neg		dx
+   573                                  line32:		
+   574 00000308 8916[0800]              		mov		[deltay],dx
+   575 0000030C 5A                      		pop		dx
+   576                                  
+   577 0000030D 50                      		push		ax
+   578 0000030E A1[0600]                		mov		ax,[deltax]
+   579 00000311 3B06[0800]              		cmp		ax,[deltay]
+   580 00000315 58                      		pop		ax
+   581 00000316 724D                    		jb		line5
+   582                                  
+   583                                  	; cx > ax e deltax>deltay
+   584 00000318 51                      		push		cx
+   585 00000319 29C1                    		sub		cx,ax
+   586 0000031B 890E[0600]              		mov		[deltax],cx
+   587 0000031F 59                      		pop		cx
+   588 00000320 52                      		push		dx
+   589 00000321 29DA                    		sub		dx,bx
+   590 00000323 8916[0800]              		mov		[deltay],dx
+   591 00000327 5A                      		pop		dx
+   592                                  
+   593 00000328 89C6                    		mov		si,ax
+   594                                  line4:
+   595 0000032A 50                      		push		ax
+   596 0000032B 52                      		push		dx
+   597 0000032C 56                      		push		si
+   598 0000032D 29C6                    		sub		si,ax	;(x-x1)
+   599 0000032F A1[0800]                		mov		ax,[deltay]
+   600 00000332 F7EE                    		imul		si
+   601 00000334 8B36[0600]              		mov		si,[deltax]		;arredondar
+   602 00000338 D1EE                    		shr		si,1
+   603                                  ; se numerador (DX)>0 soma se <0 subtrai
+   604 0000033A 81FA0000                		cmp		dx,0
+   605 0000033E 7C09                    		jl		ar1
+   606 00000340 01F0                    		add		ax,si
+   607 00000342 81D20000                		adc		dx,0
+   608 00000346 E90600                  		jmp		arc1
+   609 00000349 29F0                    ar1:		sub		ax,si
+   610 0000034B 81DA0000                		sbb		dx,0
+   611                                  arc1:
+   612 0000034F F73E[0600]              		idiv		word [deltax]
+   613 00000353 01D8                    		add		ax,bx
+   614 00000355 5E                      		pop		si
+   615 00000356 56                      		push		si
+   616 00000357 50                      		push		ax
+   617 00000358 E8A4FD                  		call		plot_xy
+   618 0000035B 5A                      		pop		dx
+   619 0000035C 58                      		pop		ax
+   620 0000035D 39CE                    		cmp		si,cx
+   621 0000035F 745A                    		je		fim_line
+   622 00000361 46                      		inc		si
+   623 00000362 E9C5FF                  		jmp		line4
+   624                                  
+   625 00000365 39D3                    line5:		cmp		bx,dx
+   626 00000367 7203                    		jb 		line7
+   627 00000369 91                      		xchg		ax,cx
+   628 0000036A 87DA                    		xchg		bx,dx
+   629                                  line7:
+   630 0000036C 51                      	push cx
+   631 0000036D 29C1                    	sub cx,ax
+   632 0000036F 890E[0600]              	mov  [deltax],cx
+   633 00000373 59                      	pop  cx
+   634 00000374 52                      	push dx
+   635 00000375 29DA                    	sub dx,bx
+   636 00000377 8916[0800]              	mov [deltay],dx
+   637 0000037B 5A                      	pop dx
+   638 0000037C 89DE                    	mov si,bx
+   639                                  line6:
+   640 0000037E 52                      	push dx
+   641 0000037F 56                      	push si
+   642 00000380 50                      	push ax
+   643 00000381 29DE                    	sub  si,bx	;(y-y1)
+   644 00000383 A1[0600]                	mov  ax,[deltax]
+   645 00000386 F7EE                    	imul si
+   646 00000388 8B36[0800]              	mov  si,[deltay]		;arredondar
+   647 0000038C D1EE                    	shr  si,1
+   648                                  ; se numerador (DX)>0 soma se <0 subtrai
+   649 0000038E 81FA0000                	cmp  dx,0
+   650 00000392 7C09                    	jl   ar2
+   651 00000394 01F0                    	add  ax,si
+   652 00000396 81D20000                	adc  dx,0
+   653 0000039A E90600                  	jmp  arc2
+   654                                  ar2:	
+   655 0000039D 29F0                    	sub ax, si
+   656 0000039F 81DA0000                	sbb dx, 0
+   657                                  arc2:
+   658 000003A3 F73E[0800]              	idiv word [deltay]
+   659 000003A7 89C7                    	mov di, ax
+   660 000003A9 58                      	pop ax
+   661 000003AA 01C7                    	add di, ax
+   662 000003AC 5E                      	pop si
+   663 000003AD 57                      	push di
+   664 000003AE 56                      	push si
+   665 000003AF E84DFD                  	call plot_xy
+   666 000003B2 5A                      	pop dx
+   667 000003B3 39D6                    	cmp si, dx
+   668 000003B5 7404                    	je  fim_line
+   669 000003B7 46                      	inc si
+   670 000003B8 E9C3FF                  	jmp line6
+   671                                  
+   672                                  fim_line:
+   673 000003BB 5F                      	pop di
+   674 000003BC 5E                      	pop si
+   675 000003BD 5A                      	pop dx
+   676 000003BE 59                      	pop cx
+   677 000003BF 5B                      	pop bx
+   678 000003C0 58                      	pop ax
+   679 000003C1 9D                      	popf
+   680 000003C2 5D                      	pop bp
+   681 000003C3 C20800                  	ret 8
+   682                                  ;*******************************************************************
+   683                                  segment data
+   684 00000000 0F                      cor      	db		branco_intenso
+   685                                  ; I R G B COR
+   686                                  ; 0 0 0 0 preto
+   687                                  ; 0 0 0 1 azul
+   688                                  ; 0 0 1 0 verde
+   689                                  ; 0 0 1 1 cyan
+   690                                  ; 0 1 0 0 vermelho
+   691                                  ; 0 1 0 1 magenta
+   692                                  ; 0 1 1 0 marrom
+   693                                  ; 0 1 1 1 branco
+   694                                  ; 1 0 0 0 cinza
+   695                                  ; 1 0 0 1 azul claro
+   696                                  ; 1 0 1 0 verde claro
+   697                                  ; 1 0 1 1 cyan claro
+   698                                  ; 1 1 0 0 rosa
+   699                                  ; 1 1 0 1 magenta claro
+   700                                  ; 1 1 1 0 amarelo
+   701                                  ; 1 1 1 1 branco intenso
+   702                                  
+   703                                  preto		equ		0
+   704                                  azul		equ		1
+   705                                  verde		equ		2
+   706                                  cyan		equ		3
+   707                                  vermelho	equ		4
+   708                                  magenta		equ		5
+   709                                  marrom		equ		6
+   710                                  branco		equ		7
+   711                                  cinza		equ		8
+   712                                  azul_claro	equ		9
+   713                                  verde_claro	equ		10
+   714                                  cyan_claro	equ		11
+   715                                  rosa		equ		12
+   716                                  magenta_claro	equ		13
+   717                                  amarelo		equ		14
+   718                                  branco_intenso	equ		15
+   719                                  
+   720 00000001 00                      modo_anterior	db		0
+   721 00000002 0000                    linha   	dw  		0
+   722 00000004 0000                    coluna  	dw  		0
+   723 00000006 0000                    deltax		dw		0
+   724 00000008 0000                    deltay		dw		0	
+   725 0000000A 414252495224            abrir    	db  		'ABRIR$'
+   726 00000010 5341495224              sair    	db  		'SAIR$'
+   727 00000015 4849535424              hist    	db  		'HIST$'
+   728 0000001A 48495354455124          eqhist    	db  		'HISTEQ$'
+   729 00000021 484953544F4752414D-     txeqhist    	db  		'HISTOGRAMA ORIGINAL$'
+   730 0000002A 41204F524947494E41-
+   731 00000033 4C24               
+   732 00000035 484953544F4752414D-     txhist    	db  		'HISTOGRAMA EQUALIZADO$'
+   733 0000003E 4120455155414C495A-
+   734 00000047 41444F24           
+   735 0000004B 524F444F4C464F2056-     nome    	db  		'RODOLFO VALENTIM$'
+   736 00000054 414C454E54494D24   
+   737 0000005C 53495354454D415320-     disc    	db  		'SISTEMAS EMBARCADOS 2016/1$'
+   738 00000065 454D4241524341444F-
+   739 0000006E 5320323031362F3124 
+   740 00000077 696D6167656D2E7478-     filename	db		'imagem.txt', 0
+   741 00000080 7400               
+   742 00000082 00                      buffer		db		0
+   743 00000083 0000                    handle 		dw 		0
+   744 00000085 00                      input		db		0
+   745 00000086 0000<rept>              histogram:	times		256 dw 0
+   746 00000286 0000<rept>              cfd:		times		256 dw 0
+   747 00000486 25                      image:		db  		62501
+   748                                  
+   749                                  ;*************************************************************************
+   750                                  segment stack stack
+   751 00000000 <res 00000100>             		resb 		256
+   752                                  stacktop:
+   753                                  
+   754                                  

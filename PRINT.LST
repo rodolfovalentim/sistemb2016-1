@@ -1,0 +1,122 @@
+     1                                  segment code
+     2                                  ..start:
+     3 00000000 B8[0000]                	mov ax, data
+     4 00000003 8ED8                    	mov ds, ax
+     5 00000005 B8[0000]                	mov ax, stack
+     6 00000008 8ED0                    	mov ss,	ax
+     7 0000000A BC[0001]                	mov sp, stacktop
+     8                                  	
+     9                                  	;abre arquivo
+    10 0000000D B43D                    	mov ah, 3Dh
+    11 0000000F B000                    	mov al, 00
+    12 00000011 BA[0000]                	mov dx, filename
+    13 00000014 B90100                  	mov cx, 1
+    14 00000017 CD21                    	int 21h	
+    15                                  
+    16 00000019 A3[0C00]                	mov word[handle], ax
+    17 0000001C BE[1304]                	mov si, image
+    18                                  
+    19                                  read:
+    20 0000001F B43F                     	mov ah, 3Fh
+    21 00000021 8B1E[0C00]              	mov bx, word[handle]
+    22 00000025 B90100                  	mov cx, 1
+    23 00000028 BA[0E00]                	mov dx, input
+    24 0000002B CD21                    	int 21h
+    25                                  
+    26                                  	;verifica se o arquivo acabou	
+    27 0000002D 39C8                    	cmp ax, cx
+    28 0000002F 7C2F                    	jl finishread
+    29                                  	
+    30                                  	;compara com o espaço
+    31 00000031 8A16[0E00]              	mov dl, byte[input]
+    32 00000035 80FA20                  	cmp dl, 20h
+    33 00000038 7417                    	je store
+    34                                  
+    35 0000003A 80FA30                  	cmp dl, '0'
+    36 0000003D 7C21                    	jl finishread
+    37                                  
+    38 0000003F A0[0B00]                	mov al, byte[buffer]
+    39 00000042 80EA30                  	sub dl, '0'
+    40 00000045 B30A                    	mov bl, 0ah
+    41 00000047 F6E3                    	mul bl
+    42 00000049 00D0                    	add al, dl
+    43 0000004B A2[0B00]                	mov byte[buffer], al
+    44 0000004E E9CEFF                  	jmp read
+    45                                  	
+    46                                  store:
+    47 00000051 8A16[0B00]              	mov dl, byte[buffer]
+    48 00000055 8814                    	mov byte[si], dl
+    49 00000057 46                      	inc si
+    50 00000058 C606[0B00]00            	mov byte[buffer], 00h
+    51 0000005D E9BFFF                  	jmp read
+    52                                  
+    53                                  finishread:
+    54                                  	; termina a leitura da imagem
+    55 00000060 8A16[0B00]              	mov dl, [buffer]	
+    56 00000064 8814                    	mov byte[si], dl
+    57 00000066 46                      	inc si
+    58 00000067 C606[0B00]00            	mov byte[buffer], 00h
+    59 0000006C E90000                  	jmp print
+    60                                  
+    61                                  print:	
+    62                                  	;imprime a imagem na tela
+    63 0000006F C60424                  	mov byte[si], '$'
+    64 00000072 BA[1304]                	mov dx, image
+    65 00000075 B409                    	mov ah, 09h
+    66 00000077 CD21                    	int 21h
+    67                                  
+    68                                  doHistogram:
+    69 00000079 BE[1304]                	mov si, image
+    70 0000007C BF[0F00]                	mov di, histogram
+    71 0000007F B924F4                  	mov cx, 62500
+    72                                  L2:
+    73 00000082 8A1C                    	mov bl, byte[si]
+    74 00000084 01DB                    	add bx,bx
+    75 00000086 8141FF0100              	add word[di+bx-1], 0001h
+    76 0000008B 46                      	inc si
+    77 0000008C E2F4                    	loop L2
+    78                                  
+    79                                  acumulate:
+    80 0000008E BE[0F00]                	mov si, histogram
+    81 00000091 BF[1102]                	mov di, cfd
+    82                                  
+    83 00000094 8B04                    	mov ax, [si]
+    84 00000096 8905                    	mov [di], ax
+    85 00000098 81C60200                	add si, 2
+    86 0000009C B9FF00                  	mov cx, 255
+    87                                  L3:
+    88 0000009F 8B04                    	mov ax, [si]
+    89 000000A1 014502                  	add [di+2], ax
+    90 000000A4 8B05                    	mov ax, [di]
+    91 000000A6 014502                  	add [di+2], ax
+    92 000000A9 81C70200                	add di, 2
+    93 000000AD E2F0                    	loop L3
+    94                                  
+    95                                  exit:
+    96 000000AF BA[0F00]                	mov dx, histogram
+    97 000000B2 B409                    	mov ah, 09h
+    98 000000B4 CD21                    	int 21h
+    99                                  
+   100 000000B6 BA[1102]                	mov dx, cfd
+   101 000000B9 B409                    	mov ah, 09h
+   102 000000BB CD21                    	int 21h
+   103                                  
+   104 000000BD B44C                    	mov ah, 4Ch
+   105 000000BF CD21                    	int 21h
+   106                                  
+   107                                  segment data
+   108 00000000 696D6167656D2E7478-     filename	db	'imagem.txt', 0
+   109 00000009 7400               
+   110 0000000B 00                      buffer		db	0
+   111 0000000C 0000                    handle 		dw 	0
+   112 0000000E 00                      input		db	0
+   113 0000000F 0000<rept>              histogram:	times	256 dw 0
+   114 0000020F 4124                    end1:		db	'A$'
+   115 00000211 0000<rept>              cfd:		times	256 dw 0
+   116 00000411 4224                    end2:		db	'B$'
+   117 00000413 <res 0000F424>          image:		resb  	62500
+   118                                  
+   119                                  segment stack stack
+   120 00000000 <res 00000100>          resb 256
+   121                                  stacktop:
+   122                                  

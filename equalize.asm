@@ -9,6 +9,7 @@ segment code
 equalize:
 	mov si, histogram
 	mov di, eqhistogram
+
 	mov ax, [si]
 	mov [di], ax
 	add si, 2

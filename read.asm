@@ -5,7 +5,7 @@ segment code
 	mov ax, stack
 	mov ss,	ax
 	mov sp, stacktop
-	
+
 					;abre arquivo
 	mov ah, 3Dh
 	mov al, 00
@@ -23,11 +23,11 @@ read:
 	mov cx, 1
 	mov dx, input
 	int 21h
-	
+
 					;verifica se o arquivo acabou	
 	cmp ax, cx
 	jl finishread
-	
+
 					;compara com o espaço
 	mov dl, byte[input]
 	cmp dl, 20h
@@ -43,7 +43,7 @@ read:
 	add al, dl
 	mov byte[buffer], al
 	jmp read
-	
+
 store:
 	mov bx, word[pointer]
 	mov dl, byte[buffer]
@@ -115,8 +115,9 @@ input		db	0
 handle		dw 	0
 pointer		dw 	1
 histogram:	times	256 dw 0000h
-eqhistogram:	times	256 dw 0000h
 fim1		db	'$'
+eqhistogram:	times	256 dw 0000h
+fim2		db	'$'
 image:		resb  	1
 
 segment stack stack

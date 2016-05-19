@@ -14,6 +14,13 @@
 	call	line
 %endmacro
 
+%macro ponto 2			; x,y,color
+	add %2, 58
+	push %1
+	push %2	
+	call plot_xy
+	sub %2, 58
+%endmacro
 
 %macro writeword 3
     	mov     bx,0
@@ -33,11 +40,69 @@
 
 segment code
 ..start:
-    	mov 	ax,data
-    	mov 	ds,ax
-    	mov 	ax,stack
-    	mov 	ss,ax
-    	mov 	sp,stacktop
+    	mov ax,data
+    	mov ds,ax
+    	mov ax,stack
+    	mov ss,ax
+    	mov sp,stacktop
+
+	;abre arquivo
+	mov ah, 3Dh
+	mov al, 00
+	mov dx, filename
+	mov cx, 1
+	int 21h	
+
+	mov word[handle], ax
+	mov si, image
+
+read:
+ 	mov ah, 3Fh
+	mov bx, word[handle]
+	mov cx, 1
+	mov dx, input
+	int 21h
+
+	;verifica se o arquivo acabou	
+	cmp ax, cx
+	jl finishread
+	
+	;compara com o espaço
+	mov dl, byte[input]
+	cmp dl, 20h
+	je store
+
+	cmp dl, '0'
+	jl finishread
+
+	mov al, byte[buffer]
+	sub dl, '0'
+	mov bl, 0ah
+	mul bl
+	add al, dl
+	mov byte[buffer], al
+	jmp read
+	
+store:
+	mov dl, byte[buffer]
+	mov byte[si], dl
+	inc si
+	mov byte[buffer], 00h
+	jmp read
+
+finishread:
+	; termina a leitura da imagem
+	mov dl, [buffer]	
+	mov byte[si], dl
+	inc si
+	mov byte[si], '$'
+	jmp print
+
+print:	
+	;imprime a imagem na tela
+	mov dx, image
+	mov ah, 09h
+	int 21h
 
 ; salvar modo corrente de video(vendo como est� o modo de video da maquina)
         mov 	ah,0Fh
@@ -51,15 +116,53 @@ segment code
 	
 ;escrever uma mensagem
 
-	writeword mens,1,10
+;	drawline 255, 0, 255, 479, branco_intenso
+;	drawline 255, 239, 639, 239, branco_intenso
+;	drawline 63, 479, 63, 431, branco_intenso
+;	drawline 127, 479, 127, 431, branco_intenso
+;	drawline 191, 479, 191, 431, branco_intenso
+;	drawline 0, 431, 255, 431, branco_intenso
+;	drawline 0, 63, 255, 63, branco_intenso
 
-	mov    	ah,08h
-	int     21h
-	mov  	ah,0   			; set video mode
-	mov  	al,[modo_anterior]   	; modo anterior
-	int  	10h
-	mov     ax,4c00h
-	int     21h
+;	writeword abrir, 1, 1
+;	writeword sair, 1, 10
+;	writeword hist, 1, 18
+;	writeword eqhist, 1, 25
+;	writeword txhist, 1, 33
+;	writeword txeqhist, 16, 33
+;	writeword nome, 27, 1
+;	writeword disc, 28, 1
+
+	mov ax, 0  	; x
+	mov cx, 255	; y
+	mov bx, image
+	int 3	
+
+L3:	cmp cx, 0
+	je FL3
+	mov al, byte[bx]
+	shr al, 4
+	mov byte[cor], al	
+	ponto ax, cx
+	inc ax
+	inc bx	
+	cmp ax, 256
+	je RCAX
+	jmp L3
+RCAX:	 
+	mov ax, 0
+	sub cx, 1
+	jmp L3
+FL3:	
+
+	mov ah,08h
+	int 21h
+	mov ah,0   			; set video mode
+	mov al,[modo_anterior]   	; modo anterior
+	int 10h
+
+	mov ah, 4Ch
+	int 21h
 ;***************************************************************************
 ; função cursor
 ; dh = linha (0-29) e  dl=coluna  (0-79)
@@ -192,97 +295,97 @@ circle:
 ;valores positivos para d
 
 stay:				;loop
-	mov		si,di
-	cmp		si,0
-	jg		inf       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
-	mov		si,dx		;o jl � importante porque trata-se de conta com sinal
-	sal		si,1		;multiplica por doi (shift arithmetic left)
-	add		si,3
-	add		di,si     ;nesse ponto d=d+2*dx+3
-	inc		dx		;incrementa dx
-	jmp		plotar
+	mov	si,di
+	cmp	si,0
+	jg	inf       ;caso d for menor que 0, seleciona pixel superior (n�o  salta)
+	mov	si,dx		;o jl � importante porque trata-se de conta com sinal
+	sal	si,1		;multiplica por doi (shift arithmetic left)
+	add	si,3
+	add	di,si     ;nesse ponto d=d+2*dx+3
+	inc	dx		;incrementa dx
+	jmp	plotar
 inf:	
-	mov		si,dx
-	sub		si,cx  		;faz x - y (dx-cx), e salva em di 
-	sal		si,1
-	add		si,5
-	add		di,si		;nesse ponto d=d+2*(dx-cx)+5
-	inc		dx		;incrementa x (dx)
-	dec		cx		;decrementa y (cx)
+	mov	si,dx
+	sub	si,cx  		;faz x - y (dx-cx), e salva em di 
+	sal	si,1
+	add	si,5
+	add	di,si		;nesse ponto d=d+2*(dx-cx)+5
+	inc	dx		;incrementa x (dx)
+	dec	cx		;decrementa y (cx)
 	
 plotar:	
-	mov		si,dx
-	add		si,ax
+	mov	si,dx
+	add	si,ax
 	push    si			;coloca a abcisa x+xc na pilha
-	mov		si,cx
-	add		si,bx
+	mov	si,cx
+	add	si,bx
 	push    si			;coloca a ordenada y+yc na pilha
 	call plot_xy		;toma conta do segundo octante
-	mov		si,ax
-	add		si,dx
+	mov	si,ax
+	add	si,dx
 	push    si			;coloca a abcisa xc+x na pilha
-	mov		si,bx
-	sub		si,cx
+	mov	si,bx
+	sub	si,cx
 	push    si			;coloca a ordenada yc-y na pilha
 	call plot_xy		;toma conta do s�timo octante
-	mov		si,ax
-	add		si,cx
+	mov	si,ax
+	add	si,cx
 	push    si			;coloca a abcisa xc+y na pilha
-	mov		si,bx
-	add		si,dx
+	mov	si,bx
+	add	si,dx
 	push    si			;coloca a ordenada yc+x na pilha
 	call plot_xy		;toma conta do segundo octante
-	mov		si,ax
-	add		si,cx
+	mov	si,ax
+	add	si,cx
 	push    si			;coloca a abcisa xc+y na pilha
-	mov		si,bx
-	sub		si,dx
+	mov	si,bx
+	sub	si,dx
 	push    si			;coloca a ordenada yc-x na pilha
 	call plot_xy		;toma conta do oitavo octante
-	mov		si,ax
-	sub		si,dx
+	mov	si,ax
+	sub	si,dx
 	push    si			;coloca a abcisa xc-x na pilha
-	mov		si,bx
-	add		si,cx
+	mov	si,bx
+	add	si,cx
 	push    si			;coloca a ordenada yc+y na pilha
 	call plot_xy		;toma conta do terceiro octante
-	mov		si,ax
-	sub		si,dx
+	mov	si,ax
+	sub	si,dx
 	push    si			;coloca a abcisa xc-x na pilha
-	mov		si,bx
-	sub		si,cx
+	mov	si,bx
+	sub	si,cx
 	push    si			;coloca a ordenada yc-y na pilha
 	call plot_xy		;toma conta do sexto octante
-	mov		si,ax
-	sub		si,cx
+	mov	si,ax
+	sub	si,cx
 	push    si			;coloca a abcisa xc-y na pilha
-	mov		si,bx
-	sub		si,dx
+	mov	si,bx
+	sub	si,dx
 	push    si			;coloca a ordenada yc-x na pilha
 	call plot_xy		;toma conta do quinto octante
-	mov		si,ax
-	sub		si,cx
+	mov	si,ax
+	sub	si,cx
 	push    si			;coloca a abcisa xc-y na pilha
-	mov		si,bx
-	add		si,dx
+	mov	si,bx
+	add	si,dx
 	push    si			;coloca a ordenada yc-x na pilha
 	call plot_xy		;toma conta do quarto octante
 	
-	cmp		cx,dx
-	jb		fim_circle  ;se cx (y) est� abaixo de dx (x), termina     
-	jmp		stay		;se cx (y) est� acima de dx (x), continua no loop
+	cmp	cx,dx
+	jb	fim_circle  ;se cx (y) est� abaixo de dx (x), termina     
+	jmp	stay		;se cx (y) est� acima de dx (x), continua no loop
 	
 	
 fim_circle:
-	pop		di
-	pop		si
-	pop		dx
-	pop		cx
-	pop		bx
-	pop		ax
+	pop	di
+	pop	si
+	pop	dx
+	pop	cx
+	pop	bx
+	pop 	ax
 	popf
-	pop		bp
-	ret		6
+	pop	bp
+	ret	6
 ;-----------------------------------------------------------------------------
 ;    fun��o full_circle
 ;	 push xc; push yc; push r; call full_circle;  (xc+r<639,yc+r<479)e(xc-r>0,yc-r>0)
@@ -519,82 +622,78 @@ line5:		cmp		bx,dx
 		xchg		ax,cx
 		xchg		bx,dx
 line7:
-		push		cx
-		sub		cx,ax
-		mov		[deltax],cx
-		pop		cx
-		push		dx
-		sub		dx,bx
-		mov		[deltay],dx
-		pop		dx
-
-
-
-		mov		si,bx
+	push cx
+	sub cx,ax
+	mov  [deltax],cx
+	pop  cx
+	push dx
+	sub dx,bx
+	mov [deltay],dx
+	pop dx
+	mov si,bx
 line6:
-		push		dx
-		push		si
-		push		ax
-		sub		si,bx	;(y-y1)
-		mov		ax,[deltax]
-		imul		si
-		mov		si,[deltay]		;arredondar
-		shr		si,1
+	push dx
+	push si
+	push ax
+	sub  si,bx	;(y-y1)
+	mov  ax,[deltax]
+	imul si
+	mov  si,[deltay]		;arredondar
+	shr  si,1
 ; se numerador (DX)>0 soma se <0 subtrai
-		cmp		dx,0
-		jl		ar2
-		add		ax,si
-		adc		dx,0
-		jmp		arc2
-ar2:		sub		ax,si
-		sbb		dx,0
+	cmp  dx,0
+	jl   ar2
+	add  ax,si
+	adc  dx,0
+	jmp  arc2
+ar2:	
+	sub ax, si
+	sbb dx, 0
 arc2:
-		idiv		word [deltay]
-		mov		di,ax
-		pop		ax
-		add		di,ax
-		pop		si
-		push		di
-		push		si
-		call		plot_xy
-		pop		dx
-		cmp		si,dx
-		je		fim_line
-		inc		si
-		jmp		line6
+	idiv word [deltay]
+	mov di, ax
+	pop ax
+	add di, ax
+	pop si
+	push di
+	push si
+	call plot_xy
+	pop dx
+	cmp si, dx
+	je  fim_line
+	inc si
+	jmp line6
 
 fim_line:
-		pop		di
-		pop		si
-		pop		dx
-		pop		cx
-		pop		bx
-		pop		ax
-		popf
-		pop		bp
-		ret		8
+	pop di
+	pop si
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	popf
+	pop bp
+	ret 8
 ;*******************************************************************
 segment data
-
-cor		db		branco_intenso
-
-;	I R G B COR
-;	0 0 0 0 preto
-;	0 0 0 1 azul
-;	0 0 1 0 verde
-;	0 0 1 1 cyan
-;	0 1 0 0 vermelho
-;	0 1 0 1 magenta
-;	0 1 1 0 marrom
-;	0 1 1 1 branco
-;	1 0 0 0 cinza
-;	1 0 0 1 azul claro
-;	1 0 1 0 verde claro
-;	1 0 1 1 cyan claro
-;	1 1 0 0 rosa
-;	1 1 0 1 magenta claro
-;	1 1 1 0 amarelo
-;	1 1 1 1 branco intenso
+cor      	db		branco_intenso
+; I R G B COR
+; 0 0 0 0 preto
+; 0 0 0 1 azul
+; 0 0 1 0 verde
+; 0 0 1 1 cyan
+; 0 1 0 0 vermelho
+; 0 1 0 1 magenta
+; 0 1 1 0 marrom
+; 0 1 1 1 branco
+; 1 0 0 0 cinza
+; 1 0 0 1 azul claro
+; 1 0 1 0 verde claro
+; 1 0 1 1 cyan claro
+; 1 1 0 0 rosa
+; 1 1 0 1 magenta claro
+; 1 1 1 0 amarelo
+; 1 1 1 1 branco intenso
 
 preto		equ		0
 azul		equ		1
@@ -618,10 +717,25 @@ linha   	dw  		0
 coluna  	dw  		0
 deltax		dw		0
 deltay		dw		0	
-mens    	db  		'Funcao Grafica$'
+abrir    	db  		'ABRIR$'
+sair    	db  		'SAIR$'
+hist    	db  		'HIST$'
+eqhist    	db  		'HISTEQ$'
+txeqhist    	db  		'HISTOGRAMA ORIGINAL$'
+txhist    	db  		'HISTOGRAMA EQUALIZADO$'
+nome    	db  		'RODOLFO VALENTIM$'
+disc    	db  		'SISTEMAS EMBARCADOS 2016/1$'
+filename	db		'imagem.txt', 0
+buffer		db		0
+handle 		dw 		0
+input		db		0
+histogram:	times		256 dw 0
+cfd:		times		256 dw 0
+image:		db  		62501
+
 ;*************************************************************************
 segment stack stack
-   		resb 		512
+   		resb 		256
 stacktop:
 
 
