@@ -108,6 +108,7 @@ doHistogram:
 	mov di, histogram
 	mov cx, 62501
 L2:
+	mov bh, 00h
 	mov bl, byte[si]
 	add bx, bx
 	add word[di+bx], 0001h
@@ -134,31 +135,46 @@ L4:
 	loop L4
 
 equalize:
-	;mov di, image
-	;mov cx, 62500
-	;mov bx, 62500
-	
-	;int 3
-	;or ax, ax
-	
+	mov di, image
+	mov cx, 62500
+	mov bx, 62500
+
 L7:
-	;mov al, byte[di]
-	;and ax, 00FFh
-	;mov si, ax
-	;add si, si
-	;mov ax, [cfd+si]
-	;div bx
-	;shr ax, 8
-	;mov [di], al
-	;inc di
-	;loop L7
+	mov al, byte[di]
+	and ax, 00FFh
+	mov si, ax
+	add si, si
+	mov ax, [cfd+si]
+	mov bx, 256	
+	mul bx	
+	mov bx, 62500
+	div bx
+	mov [di], al
+	inc di
+	loop L7
+
+doHistogramEq:
+	mov si, image
+	mov di, eqhistogram
+	mov cx, 62501
+L10:
+	mov bh, 00h
+	mov bl, byte[si]
+	add bx, bx
+	add word[di+bx], 0001h
+	inc si
+	loop L10
+
+;*******************************************************************
+
+
 
 ; salvar modo corrente de video(vendo como esta o modo de video da maquina)
         mov 	ah,0Fh
     	int 	10h
     	mov 	[modo_anterior],al   
 
-; alterar modo de video para gráfico 640x480 16 cores
+; alterar modo de video para grafico 640x480 16 cores
     	mov    	al,12h
    	mov    	ah,0
     	int    	10h
@@ -185,7 +201,7 @@ L7:
 	mov si, 0  	; x
 	mov di, 249	; y
 	mov bx, image
-	
+
 L3:	cmp di, 0
 	je EL3
 	mov ah, 00h
@@ -207,11 +223,12 @@ EL3: 	; end of loop 3
 	; plot histogram
 	mov cx, 319
 	mov bx, histogram
+
 L5:
 	cmp cx, 575
 	je EL5
 	mov dx, word[bx]
-	shr dx, 9
+	shr dx, 4
 	add dx, 16
 	drawline cx, 16, cx, dx, branco_intenso
 	add bx, 2 
@@ -221,12 +238,12 @@ EL5: 	; end of loop 3
 
 	; plot histogram
 	mov cx, 319
-	mov bx, cfd
+	mov bx, eqhistogram
 L6:
 	cmp cx, 575
 	je EL6
 	mov dx, word[bx]
-	shr dx, 9
+	shr dx, 4
 	add dx, 250
 	drawline cx, 250, cx, dx, branco_intenso
 	add bx, 2 
@@ -234,11 +251,6 @@ L6:
 	jmp L6
 EL6: 	; end of loop 6
 
-	; equalize image
-	mov cx, 62500
-	m
-		
-	
 	mov ah,08h
 	int 21h
 	mov ah,0   			; set video mode
@@ -809,12 +821,13 @@ txeqhist    	db  		'HISTOGRAMA ORIGINAL$'
 txhist    	db  		'HISTOGRAMA EQUALIZADO$'
 nome    	db  		'RODOLFO VALENTIM$'
 disc    	db  		'SISTEMAS EMBARCADOS 2016/1$'
-filename	db		'teste.txt', 0
+filename	db		'imagem.txt', 0
 buffer		db		0
 handle 		dw 		0
 input		db		0
 histogram:	times		256 dw 0
 cfd:		times		256 dw 0
+eqhistogram: 	times		256 dw 0
 image:		resb  		62500
 
 ;*************************************************************************
