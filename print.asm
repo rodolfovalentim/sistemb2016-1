@@ -110,9 +110,7 @@ buffer		db	0
 handle 		dw 	0
 input		db	0
 histogram:	times	256 dw 0
-end1:		db	'A$'
 cfd:		times	256 dw 0
-end2:		db	'B$'
 image:		resb  	62500
 
 segment stack stack

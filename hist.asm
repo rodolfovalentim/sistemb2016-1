@@ -40,6 +40,8 @@
 %%exit:
 %endmacro
 
+;*******************************************************************
+
 segment code
 ..start:
     	mov ax,data
@@ -47,6 +49,8 @@ segment code
     	mov ax,stack
     	mov ss,ax
     	mov sp,stacktop
+
+;*******************************************************************
 
 	;abre arquivo
 	mov ah, 3Dh
@@ -96,15 +100,65 @@ finishread:
 	; termina a leitura da imagem
 	mov dl, [buffer]	
 	mov byte[si], dl
+
+;*******************************************************************
+
+doHistogram:
+	mov si, image
+	mov di, histogram
+	mov cx, 62501
+L2:
+	mov bl, byte[si]
+	add bx, bx
+	add word[di+bx], 0001h
 	inc si
-	mov byte[si], '$'
+	loop L2
+
+;*******************************************************************
+
+acumulate:
+	mov si, histogram
+	mov di, cfd
+	
+	mov bx, [si]
+	mov [di], bx
+	add si, 2
+	mov cx, 255
+L4:
+	mov bx, [si]
+	add [di+2], bx
+	mov bx, [di]
+	add [di+2], bx
+	add di, 2
+	add si, 2
+	loop L4
+
+equalize:
+	;mov di, image
+	;mov cx, 62500
+	;mov bx, 62500
+	
+	;int 3
+	;or ax, ax
+	
+L7:
+	;mov al, byte[di]
+	;and ax, 00FFh
+	;mov si, ax
+	;add si, si
+	;mov ax, [cfd+si]
+	;div bx
+	;shr ax, 8
+	;mov [di], al
+	;inc di
+	;loop L7
 
 ; salvar modo corrente de video(vendo como esta o modo de video da maquina)
         mov 	ah,0Fh
     	int 	10h
     	mov 	[modo_anterior],al   
 
-; alterar modo de video para gr�fico 640x480 16 cores
+; alterar modo de video para gráfico 640x480 16 cores
     	mov    	al,12h
    	mov    	ah,0
     	int    	10h
@@ -131,10 +185,9 @@ finishread:
 	mov si, 0  	; x
 	mov di, 249	; y
 	mov bx, image
-	int 3
 	
 L3:	cmp di, 0
-	je FL3
+	je EL3
 	mov ah, 00h
 	mov al, byte[bx]
 	shr al, 4
@@ -145,12 +198,47 @@ L3:	cmp di, 0
 	cmp si, 250
 	je RCAX
 	jmp L3
-RCAX:	 
+RCAX:	;reset counter ax
 	mov si, 0
 	sub di, 1
 	jmp L3
-FL3:	
+EL3: 	; end of loop 3		
 
+	; plot histogram
+	mov cx, 319
+	mov bx, histogram
+L5:
+	cmp cx, 575
+	je EL5
+	mov dx, word[bx]
+	shr dx, 9
+	add dx, 16
+	drawline cx, 16, cx, dx, branco_intenso
+	add bx, 2 
+	inc cx
+	jmp L5
+EL5: 	; end of loop 3	
+
+	; plot histogram
+	mov cx, 319
+	mov bx, cfd
+L6:
+	cmp cx, 575
+	je EL6
+	mov dx, word[bx]
+	shr dx, 9
+	add dx, 250
+	drawline cx, 250, cx, dx, branco_intenso
+	add bx, 2 
+	inc cx
+	jmp L6
+EL6: 	; end of loop 6
+
+	; equalize image
+	mov cx, 62500
+	m
+		
+	
 	mov ah,08h
 	int 21h
 	mov ah,0   			; set video mode
@@ -721,15 +809,16 @@ txeqhist    	db  		'HISTOGRAMA ORIGINAL$'
 txhist    	db  		'HISTOGRAMA EQUALIZADO$'
 nome    	db  		'RODOLFO VALENTIM$'
 disc    	db  		'SISTEMAS EMBARCADOS 2016/1$'
-filename	db		'imagem.txt', 0
+filename	db		'teste.txt', 0
 buffer		db		0
 handle 		dw 		0
 input		db		0
 histogram:	times		256 dw 0
 cfd:		times		256 dw 0
-image:		db  		62501
+image:		resb  		62500
 
 ;*************************************************************************
+
 segment stack stack
    		resb 		256
 stacktop:
