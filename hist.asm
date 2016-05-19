@@ -15,11 +15,13 @@
 %endmacro
 
 %macro ponto 2			; x,y,color
-	add %2, 58
+	add %1, 3
+	add %2, 100
 	push %1
 	push %2	
 	call plot_xy
-	sub %2, 58
+	sub %1, 3
+	sub %2, 100
 %endmacro
 
 %macro writeword 3
@@ -72,8 +74,8 @@ read:
 	cmp dl, 20h
 	je store
 
-	cmp dl, '0'
-	jl finishread
+	;cmp dl, '0'
+	;jl finishread
 
 	mov al, byte[buffer]
 	sub dl, '0'
@@ -96,15 +98,8 @@ finishread:
 	mov byte[si], dl
 	inc si
 	mov byte[si], '$'
-	jmp print
 
-print:	
-	;imprime a imagem na tela
-	mov dx, image
-	mov ah, 09h
-	int 21h
-
-; salvar modo corrente de video(vendo como est� o modo de video da maquina)
+; salvar modo corrente de video(vendo como esta o modo de video da maquina)
         mov 	ah,0Fh
     	int 	10h
     	mov 	[modo_anterior],al   
@@ -116,42 +111,43 @@ print:
 	
 ;escrever uma mensagem
 
-;	drawline 255, 0, 255, 479, branco_intenso
-;	drawline 255, 239, 639, 239, branco_intenso
-;	drawline 63, 479, 63, 431, branco_intenso
-;	drawline 127, 479, 127, 431, branco_intenso
-;	drawline 191, 479, 191, 431, branco_intenso
-;	drawline 0, 431, 255, 431, branco_intenso
-;	drawline 0, 63, 255, 63, branco_intenso
+	drawline 255, 0, 255, 479, branco_intenso
+	drawline 255, 239, 639, 239, branco_intenso
+	drawline 63, 479, 63, 431, branco_intenso
+	drawline 127, 479, 127, 431, branco_intenso
+	drawline 191, 479, 191, 431, branco_intenso
+	drawline 0, 431, 255, 431, branco_intenso
+	drawline 0, 63, 255, 63, branco_intenso
 
-;	writeword abrir, 1, 1
-;	writeword sair, 1, 10
-;	writeword hist, 1, 18
-;	writeword eqhist, 1, 25
-;	writeword txhist, 1, 33
-;	writeword txeqhist, 16, 33
-;	writeword nome, 27, 1
-;	writeword disc, 28, 1
+	writeword abrir, 1, 1
+	writeword sair, 1, 10
+	writeword hist, 1, 18
+	writeword eqhist, 1, 25
+	writeword txhist, 1, 33
+	writeword txeqhist, 16, 33
+	writeword nome, 27, 1
+	writeword disc, 28, 1
 
-	mov ax, 0  	; x
-	mov cx, 255	; y
+	mov si, 0  	; x
+	mov di, 249	; y
 	mov bx, image
-	int 3	
-
-L3:	cmp cx, 0
+	int 3
+	
+L3:	cmp di, 0
 	je FL3
+	mov ah, 00h
 	mov al, byte[bx]
 	shr al, 4
 	mov byte[cor], al	
-	ponto ax, cx
-	inc ax
+	ponto si, di
+	inc si
 	inc bx	
-	cmp ax, 256
+	cmp si, 250
 	je RCAX
 	jmp L3
 RCAX:	 
-	mov ax, 0
-	sub cx, 1
+	mov si, 0
+	sub di, 1
 	jmp L3
 FL3:	
 

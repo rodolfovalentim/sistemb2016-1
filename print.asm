@@ -105,7 +105,7 @@ exit:
 	int 21h
 
 segment data
-filename	db	'imagem.txt', 0
+filename	db	'teste.txt', 0
 buffer		db	0
 handle 		dw 	0
 input		db	0
