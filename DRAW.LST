@@ -1,0 +1,70 @@
+     1                                  segment code
+     2                                  ..start:
+     3 00000000 B8[0000]                    	mov 	ax,data
+     4 00000003 8ED8                        	mov 	ds,ax
+     5 00000005 B8[0000]                    	mov 	ax,stack
+     6 00000008 8ED0                        	mov 	ss,ax
+     7 0000000A BC[0001]                    	mov 	sp,stacktop
+     8                                  
+     9                                  	; salvar modo corrente de video(vendo como esta o modo de video da maquina)
+    10 0000000D B40F                            mov 	ah, 0Fh
+    11 0000000F CD10                        	int 	10h
+    12 00000011 A2[0000]                    	mov 	[modo_anterior], al   
+    13                                  
+    14                                  	; alterar modo de video para grafico 640x480 16 cores
+    15 00000014 B012                        	mov    	al, 12h
+    16 00000016 B400                       	mov    	ah, 0
+    17 00000018 CD10                        	int    	10h
+    18                                  
+    19 0000001A B80000                  	mov ax,0
+    20 0000001D CD33                    	int 33h ; mouse interrupt
+    21                                  	; (ifi AX=FFFFh mouse is installed, if 0000 not, DX - number of mouse buttons)
+    22                                  
+    23 0000001F 3D0000                  	cmp ax,0
+    24 00000022 770C                    	ja pmouse ; if AX > 0 lets start!
+    25                                  
+    26 00000024 B80100                  	mov ax, 01
+    27 00000027 CD33                    	int 33h
+    28 00000029 E90400                  	jmp pmouse
+    29                                  
+    30 0000002C B44C                    	mov ah,4ch
+    31 0000002E CD21                    	int 21h ;else just exit
+    32                                  
+    33                                  pmouse:
+    34                                  
+    35 00000030 B80300                  	mov ax,03 ; function to get mouse position and buttons 
+    36 00000033 CD33                    	int 33h
+    37                                  
+    38 00000035 89D0                    	mov ax,dx ; Y coord to AX
+    39 00000037 BA4001                  	mov dx,320
+    40                                  
+    41 0000003A F7E2                    	mul dx ; multiply AX by 320
+    42 0000003C 01C8                    	add ax,cx ; add X coord
+    43                                  
+    44                                  	; (Now currsor position is in AX, lets draw the pixel there)
+    45                                  
+    46 0000003E 89C7                    	mov di,ax
+    47 00000040 B800A0                  	mov ax,0A000h
+    48 00000043 8EC0                    	mov es,ax
+    49 00000045 B20C                    	mov dl,12 ; red color ;)
+    50 00000047 8815                    	mov [di],dl ; and we have the pixel drawn
+    51                                  
+    52                                  	;By default mouse resolution is 640x200, lets set it to c (monitor height is already set, lets just set the width)
+    53                                  
+    54 00000049 B80700                  	mov ax, 7 
+    55 0000004C B90000                  	mov cx,0 ; min pos 
+    56 0000004F BA4001                  	mov dx,320 ; max pos 
+    57 00000052 CD33                    	int 33h
+    58                                  
+    59                                  	;And height can be set:
+    60                                  
+    61 00000054 B80800                  	mov ax, 8
+    62 00000057 B90000                  	mov cx,0
+    63 0000005A BAC800                  	mov dx,200
+    64 0000005D CD33                    	int 33h
+    65                                  
+    66                                  segment data
+    67 00000000 00                      modo_anterior	db		0
+    68                                  segment stack stack
+    69 00000000 <res 00000100>          	resb 256
+    70                                  stacktop:
