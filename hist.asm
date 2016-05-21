@@ -14,7 +14,7 @@
 	call	line
 %endmacro
 
-%macro ponto 2			; x,y,color
+%macro ponto 2				; x,y,color
 	add 	%1, 3
 	add 	%2, 100
 	push 	%1
@@ -51,24 +51,81 @@ segment code
     	mov 	ss,ax
     	mov 	sp,stacktop
 
-;*******************************************************************
-	jmp 	STARTUP
-;*******************************************************************
-open:
-	;abre arquivo
+	; salvar modo corrente de video(vendo como esta o modo de video da maquina)
+        mov 	ah, 0Fh
+    	int 	10h
+    	mov 	[modo_anterior], al   
+
+	; alterar modo de video para grafico 640x480 16 cores
+    	mov    	al, 12h
+   	mov    	ah, 0
+    	int    	10h
+	
+	drawline 255, 0, 255, 479, branco_intenso
+	drawline 255, 239, 639, 239, branco_intenso
+	drawline 63, 479, 63, 431, branco_intenso
+	drawline 127, 479, 127, 431, branco_intenso
+	drawline 191, 479, 191, 431, branco_intenso
+	drawline 0, 431, 255, 431, branco_intenso
+	drawline 0, 63, 255, 63, branco_intenso
+
+	writeword abrir, 1, 1, branco_intenso
+	writeword sair, 1, 10, branco_intenso
+	writeword hist, 1, 18, branco_intenso
+	writeword eqhist, 1, 25, branco_intenso
+	writeword txhist, 1, 33, branco_intenso
+	writeword txeqhist, 16, 33, branco_intenso
+	writeword nome, 27, 1, branco_intenso
+	writeword disc, 28, 1, branco_intenso
+
+	mov 	ax, 01h
+	int 	33h		
+ETERNO:
+	mov 	ax, 05h
+	mov 	bx, 0
+	int 	33h
+
+	test 	bl, 1
+	jz 	ETERNO
+	jmp 	LEFT_BUTTON_PRESSED
+
+EXIT:
+	mov 	ah,0   			; set video mode
+	mov 	al,[modo_anterior]   	; modo anterior
+	int 	10h
+
+	mov 	ah, 4Ch
+	int	21h
+
+;*******************Functions***************************************
+
+OPEN:
 	mov 	byte[flaghist], 0
 	mov 	byte[flageqhist], 0
-	mov 	bx, histogram
+	mov 	bx, cfd
+	mov 	di, histogram
+	mov 	si, eqhistogram
 	mov 	ax, 319
+	mov 	dx, 319
 	mov 	cx, 256
 RESETH:
-	mov 	byte[bx], 0
+	mov 	word[bx], 00
+	mov 	word[di], 00
+	mov 	word[si], 00
+	add 	di, 2
+	add 	si, 2
 	add 	bx, 2
-	drawline ax, 16, ax, c, preto
-	drawline ax, 250, ax, 287, preto
+	pusha
+	drawline ax, 16, dx, 207, preto
+	popa
+	pusha
+	drawline ax, 250, dx, 447, preto
+	popa	
 	inc 	ax
+	inc 	dx
 	loop 	RESETH	
 
+	;abre arquivo
 	mov 	ah, 3Dh
 	mov	al, 00
 	mov 	dx, filename
@@ -78,7 +135,7 @@ RESETH:
 	mov 	word[handle], ax
 	mov 	si, image
 
-read:
+READ:
  	mov 	ah, 3Fh
 	mov 	bx, word[handle]
 	mov	cx, 1
@@ -87,12 +144,12 @@ read:
 
 	;verifica se o arquivo acabou	
 	cmp 	ax, cx
-	jl 	finishread
+	jl 	FINISH_READ
 	
 	;compara com o espaço
 	mov 	dl, byte[input]
 	cmp 	dl, 20h
-	je 	store
+	je 	STORE
 
 	mov 	al, byte[buffer]
 	sub 	dl, '0'
@@ -100,16 +157,16 @@ read:
 	mul 	bl
 	add 	al, dl
 	mov 	byte[buffer], al
-	jmp 	read
+	jmp 	READ
 	
-store:
+STORE:
 	mov 	dl, byte[buffer]
 	mov 	byte[si], dl
 	inc 	si
 	mov 	byte[buffer], 00h
-	jmp	read
+	jmp	READ
 
-finishread:
+FINISH_READ:
 	; termina a leitura da imagem
 	mov 	dl, [buffer]	
 	mov 	byte[si], dl
@@ -139,22 +196,22 @@ RCAX:
 	jmp 	L3
 
 EL3:
-	mov byte[flagopen], 1
-	jmp ETERNO
-
+	mov 	byte[flagopen], 1
+	jmp 	ETERNO
+	
 ;*******************************************************************
 
-doHistogram:
-	mov ax, [flagopen]	
-	cmp ax, 1
-	je ALOWED0
-	jmp ETERNO
+DO_HISTOGRAM:
+	mov 	ax, [flagopen]	
+	cmp 	ax, 1
+	je 	ALOWED0
+	jmp 	ETERNO
 
 ALOWED0:
-	mov ax, [flaghist]	
-	cmp ax, 0
-	je ALOWED1
-	jmp ETERNO
+	mov 	ax, [flaghist]	
+	cmp 	ax, 0
+	je 	ALOWED1
+	jmp 	ETERNO
 
 ALOWED1:
 	mov 	si, image
@@ -182,17 +239,17 @@ L6:
 	inc 	cx
 	jmp 	L6
 EL6:
-	mov byte[flaghist], 1	
-	jmp ETERNO	
+	mov 	byte[flaghist], 1	
+	jmp 	ETERNO	
 
 
 ;*******************************************************************
 
-acumulate:
-	mov ax, [flaghist]	
-	cmp ax, 1
-	je ALOWED2
-	jmp ETERNO
+ACUMULATE:
+	mov 	ax, [flaghist]	
+	cmp 	ax, 1
+	je 	ALOWED2
+	jmp 	ETERNO
 
 ALOWED2:
 ;	mov ax, [flageqhist]	
@@ -236,7 +293,7 @@ L7:
 	inc 	di
 	loop 	L7
 
-doHistogramEq:
+DO_HISTOGRAM_EQ:
 	mov 	si, image
 	mov 	di, eqhistogram
 	mov 	cx, 62501
@@ -267,7 +324,7 @@ EL5:
 	mov byte[flageqhist], 1
 	jmp PRINT	
 
-left_button_pressed:
+LEFT_BUTTON_PRESSED:
 	pusha
 	writeword abrir, 1, 1, branco_intenso
 	writeword sair, 1, 10,branco_intenso
@@ -291,66 +348,17 @@ CASEO:
 	jmp 	ETERNO
 CASE1:
 	writeword abrir, 1, 1, amarelo
-	jmp 	open
+	jmp 	OPEN
 CASE2:
 	writeword sair, 1, 10, amarelo
 	jmp 	EXIT
 CASE3:
 	writeword hist, 1, 18, amarelo
-	jmp 	doHistogram
+	jmp 	DO_HISTOGRAM
 CASE4:
 	writeword eqhist, 1, 25, amarelo
-	jmp 	acumulate
-;*******************************************************************
+	jmp 	ACUMULATE
 
-STARTUP:
-; salvar modo corrente de video(vendo como esta o modo de video da maquina)
-        mov 	ah, 0Fh
-    	int 	10h
-    	mov 	[modo_anterior], al   
-
-; alterar modo de video para grafico 640x480 16 cores
-    	mov    	al, 12h
-   	mov    	ah, 0
-    	int    	10h
-	
-;escrever uma mensagem
-
-	drawline 255, 0, 255, 479, branco_intenso
-	drawline 255, 239, 639, 239, branco_intenso
-	drawline 63, 479, 63, 431, branco_intenso
-	drawline 127, 479, 127, 431, branco_intenso
-	drawline 191, 479, 191, 431, branco_intenso
-	drawline 0, 431, 255, 431, branco_intenso
-	drawline 0, 63, 255, 63, branco_intenso
-
-	writeword abrir, 1, 1, branco_intenso
-	writeword sair, 1, 10, branco_intenso
-	writeword hist, 1, 18, branco_intenso
-	writeword eqhist, 1, 25, branco_intenso
-	writeword txhist, 1, 33, branco_intenso
-	writeword txeqhist, 16, 33, branco_intenso
-	writeword nome, 27, 1, branco_intenso
-	writeword disc, 28, 1, branco_intenso
-
-	mov 	ax, 01h
-	int 	33h		
-ETERNO:
-	mov 	ax, 05h
-	mov 	bx, 0
-	int 	33h
-
-	test 	bl, 1
-	jz 	ETERNO
-	jmp 	left_button_pressed
-
-EXIT:
-	mov 	ah,0   			; set video mode
-	mov 	al,[modo_anterior]   	; modo anterior
-	int 	10h
-
-	mov 	ah, 4Ch
-	int	21h
 ;***************************************************************************
 ; função cursor
 ; dh = linha (0-29) e  dl=coluna  (0-79)
