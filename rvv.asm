@@ -171,6 +171,9 @@ FINISH_READ:
 	mov 	dl, [buffer]	
 	mov 	byte[si], dl
 
+	mov ah, 3Eh
+	int 21h
+
 PRINT:	
 	; print to screen
 	mov 	si, 0  	; x
